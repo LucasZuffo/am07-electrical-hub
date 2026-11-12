@@ -32,7 +32,7 @@
     background:
       linear-gradient(90deg, rgb(6 11 26 / 86%), rgb(6 11 26 / 14%) 80%),
       linear-gradient(0deg, var(--navy), transparent 65%),
-      url("./imagens/nik3189-scaled.jpg") center 50% / cover no-repeat,
+      url("imagens/am07-ferramentas.jpg") center 50% / cover no-repeat,
       var(--panel);
   }
   .vehicle { margin: 0 0 8px; color: var(--yellow); font: 600 1.2rem Oswald, sans-serif; letter-spacing: .2em; }
@@ -61,16 +61,16 @@
   .inverter-actions a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 10px; color: var(--yellow); border: 1px solid var(--line); border-radius: 6px; text-decoration: none; font-size: .875rem; }
   .inverter-actions a:hover, .inverter-actions a:focus-visible { border-color: var(--yellow); }
 </style>
-<link rel="stylesheet" href="dashboard-nav.css">
-  <link rel="stylesheet" href="marca-equipe.css">
+<link rel="stylesheet" href="estilos/navegacao.css">
+  <link rel="stylesheet" href="estilos/marca-equipe.css">
 </head>
 <body>
 <header class="dashboard-header">
-  <img class="team-logo is-white" src="imagens/LOGO-Branca.png" width="124" height="40" alt="UFPR Fórmula">
+  <img class="team-logo is-white" src="imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR Fórmula">
   <nav aria-label="Navegação da Central de Elétrica">
     <ul class="topnav">
       <li><a href="index.html" aria-current="page">Ferramentas</a></li>
-      <li><a href="menu_am07.html">Design &amp; Cost</a></li>
+      <li><a href="design/design-cost.html">Design &amp; Cost</a></li>
       <li><a href="telemetria/index.html">Telemetria</a></li>
     </ul>
   </nav>
@@ -85,8 +85,8 @@
   <section aria-labelledby="ferramentas">
     <h2 id="ferramentas">Ferramentas do projeto</h2>
     <ul>
-      <li><a class="card" href="ferramentas/Curva_torqueRPM_V4.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 1 1 16 0v2H4z M12 16l4-5 M7 13l1 1 M12 9v1"/><circle cx="12" cy="16" r="1"/></svg><div><h3>Torque e rotação</h3><p>Curvas do motor e parâmetros da análise.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-      <li><a class="card" href="ferramentas/optimum_lap.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4c-4 0-5 4-3 7l3 3c2 2 1 6 4 6h5c3 0 4-3 2-5l-3-3c-2-2 1-4-1-6-1-2-4-2-7-2z M4 8h5 M6.5 5.5v5"/></svg><div><h3>Optimum Lap</h3><p>Resultados de simulação de volta.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
+      <li><a class="card" href="ferramentas/curva-torque.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 1 1 16 0v2H4z M12 16l4-5 M7 13l1 1 M12 9v1"/><circle cx="12" cy="16" r="1"/></svg><div><h3>Torque e rotação</h3><p>Curvas do motor e parâmetros da análise.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
+      <li><a class="card" href="ferramentas/optimum-lap.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4c-4 0-5 4-3 7l3 3c2 2 1 6 4 6h5c3 0 4-3 2-5l-3-3c-2-2 1-4-1-6-1-2-4-2-7-2z M4 8h5 M6.5 5.5v5"/></svg><div><h3>Optimum Lap</h3><p>Resultados de simulação de volta.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
     </ul>
   </section>
   <section aria-labelledby="alta-tensao">

@@ -370,7 +370,7 @@
     border-radius:8px;
     background:
       linear-gradient(0deg, #060b1a 0%, rgb(6 11 26 / 62%) 40%, transparent 85%),
-      url("./imagens/son8916-scaled%20(1).jpg") center 56% / cover no-repeat,
+      url("../imagens/am07-em-pista.jpg") center 56% / cover no-repeat,
       var(--bg-panel);
   }
   .cost-section { margin-top:28px; padding:20px; background:var(--bg-panel); border:1px solid var(--line); border-radius:8px; }
@@ -410,17 +410,17 @@
   .car-tree button:focus-visible { outline: 2px solid var(--yellow); outline-offset: -2px; }
   @media (max-width: 560px) { .car-explorer-layout { grid-template-columns: minmax(0, 1fr); } }
 </style>
-<link rel="stylesheet" href="dashboard-nav.css">
-  <link rel="stylesheet" href="marca-equipe.css">
+<link rel="stylesheet" href="../estilos/navegacao.css">
+  <link rel="stylesheet" href="../estilos/marca-equipe.css">
 </head>
 <body>
 <header class="dashboard-header">
-  <img class="team-logo is-white" src="imagens/LOGO-Branca.png" width="124" height="40" alt="UFPR Fórmula">
+  <img class="team-logo is-white" src="../imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR Fórmula">
   <nav aria-label="Navegação da Central de Elétrica">
     <ul class="topnav">
-      <li><a href="index.html">Ferramentas</a></li>
-      <li><a href="menu_am07.html" aria-current="page">Design &amp; Cost</a></li>
-      <li><a href="telemetria/index.html">Telemetria</a></li>
+      <li><a href="../index.html">Ferramentas</a></li>
+      <li><a href="design-cost.html" aria-current="page">Design &amp; Cost</a></li>
+      <li><a href="../telemetria/index.html">Telemetria</a></li>
     </ul>
   </nav>
 </header>
@@ -474,11 +474,11 @@
         </ul>
       </nav>
       <div class="car-stage">
-        <img class="car-overview" src="imagens/Screenshot_2.jpg" width="1186" height="715" alt="Vista de três quartos do AM-07 no CATIA" loading="lazy">
+        <img class="car-overview" src="../imagens/am07-catia.jpg" width="1186" height="715" alt="Vista de três quartos do AM-07 no CATIA" loading="lazy">
         <button class="car-hotspot" type="button" aria-controls="detalhe-acumulador" aria-expanded="false">Acumulador</button>
         <div class="car-detail" id="detalhe-acumulador" inert>
-          <img class="car-exterior-image" src="imagens/Screenshot_1.jpg" width="878" height="721" alt="Vista isolada da carcaça do acumulador do AM-07" loading="lazy">
-          <img class="car-interior-image" id="interior-acumulador" src="imagens/Screenshot_3.jpg" width="978" height="770" alt="Interior do acumulador do AM-07 com as tampas principais removidas" loading="lazy" aria-hidden="true">
+          <img class="car-exterior-image" src="../imagens/acumulador-carcaca.jpg" width="878" height="721" alt="Vista isolada da carcaça do acumulador do AM-07" loading="lazy">
+          <img class="car-interior-image" id="interior-acumulador" src="../imagens/acumulador-interior.jpg" width="978" height="770" alt="Interior do acumulador do AM-07 com as tampas principais removidas" loading="lazy" aria-hidden="true">
           <div class="car-actions">
             <button class="car-return" type="button">Voltar ao carro</button>
             <button class="car-interior-toggle" type="button" aria-controls="interior-acumulador" aria-expanded="false">Ver interior</button>
@@ -490,7 +490,7 @@
 
     <div class="grid">
 
-      <a class="tile-primary" href="ferramentas/Curva_torque_Design.html">
+      <a class="tile-primary" href="curva-torque-apresentacao.html">
         <div class="tile-top">
           <svg class="tile-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 40 L6 8"/>
@@ -536,7 +536,7 @@
           <div class="badge">Em breve</div>
         </div>
 
-        <a class="tile-primary" href="ferramentas/optimum_lap.html">
+        <a class="tile-primary" href="../ferramentas/optimum-lap.html">
           <svg class="tile-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 38 L6 8"/>
             <path d="M6 38 L42 38"/>

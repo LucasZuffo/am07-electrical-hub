@@ -16,6 +16,8 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
   const scopeCsv = get("inverterScopeCsv");
   const demoForm = get("inverterDemoForm");
   const demoMode = get("inverterDemoMode");
+  const pedal = get("inverterDemoPedal");
+  const pedalReading = get("inverterDemoPedalReading");
   const commandButtons = [...get("inverterCommands").querySelectorAll("button")];
   const format = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
   const fineFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
@@ -263,6 +265,7 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     clearDevice();
     if (demo) {
       demo = null;
+      resetPedal();
       setDemoAppearance(false);
       Object.assign(get("inverterDecimation"), previousScopeSettings.decimation);
       get("inverterScopeDetails").open = previousScopeSettings.scopeOpen;
@@ -355,6 +358,32 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     connection("simulation", status.textContent);
     beginLiveScope();
   }
+
+  function updatePedal() {
+    if (!demo) return;
+    const percent = pedal.valueAsNumber;
+    const { iqReference, snapshot } = demo.setPedal(percent);
+    pedalReading.value = `${percent}% · ${format.format(iqReference)} A`;
+    showReferences(snapshot.references);
+    paintReadings(snapshot);
+  }
+
+  function resetPedal() {
+    if (pedal.valueAsNumber === 0) return;
+    pedal.value = "0";
+    pedalReading.value = "0% · 0 A";
+    updatePedal();
+  }
+
+  pedal.addEventListener("input", updatePedal);
+  pedal.addEventListener("keyup", resetPedal);
+  pedal.addEventListener("blur", resetPedal);
+  window.addEventListener("pointerup", resetPedal);
+  window.addEventListener("pointercancel", resetPedal);
+  window.addEventListener("blur", resetPedal);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) resetPedal();
+  });
 
   demoMode.addEventListener("change", syncDemoReferenceFields);
   demoForm.addEventListener("submit", (event) => {

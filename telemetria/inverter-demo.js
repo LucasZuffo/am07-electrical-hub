@@ -4,6 +4,7 @@ function createInverterDemo(clock = () => performance.now() / 1000) {
   const flux = 0.006067;
   const torquePerAmp = 1.5 * polePairs * flux;
   const maxRpm = 5500;
+  const teknicPeakIq = 7.1;
   const names = [
     "Id", "Iq", "theta_elec", "omega_elec", "Vd", "Vq", "Iu", "Iv", "Iw",
     "res_sin", "res_cos", "res_w_lpf", "vbus", "theta_est", "theta_err",
@@ -204,6 +205,13 @@ function createInverterDemo(clock = () => performance.now() / 1000) {
   }
 
   return {
+    setPedal(percent) {
+      advance();
+      const iqReference = limit(percent, 0, 100) / 100 * teknicPeakIq;
+      write("control_mode", 0);
+      write("iq_ref", iqReference);
+      return { iqReference, snapshot: snapshot() };
+    },
     request(op, fields = {}) {
       advance();
       switch (op) {

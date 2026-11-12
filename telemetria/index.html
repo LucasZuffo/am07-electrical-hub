@@ -360,6 +360,12 @@
               <div><small>BARRAMENTO CC</small><strong><span data-value="inverter-vbus">--</span> <em>V</em></strong></div>
             </div>
             <div id="inverterDemoControls" hidden>
+              <div class="inverter-pedal">
+                <label for="inverterDemoPedal">Pedal virtual • Teknic</label>
+                <output id="inverterDemoPedalReading" for="inverterDemoPedal">0% · 0 A</output>
+                <input id="inverterDemoPedal" type="range" min="0" max="100" value="0" aria-describedby="inverterDemoPedalHint">
+                <small id="inverterDemoPedalHint">Arraste ou mantenha uma seta pressionada. Ao soltar, o pedido de Iq volta a zero.</small>
+              </div>
               <form class="inverter-toolbar inverter-reference" id="inverterDemoForm">
                 <label>Modo de controle
                   <select id="inverterDemoMode"><option value="1">Velocidade</option><option value="0">Torque</option></select>

@@ -392,6 +392,10 @@ button.summary-card:hover .card-arrow { color: var(--accent); transform: transla
 .inverter-demo #inverterPanelMode { color: var(--accent); }
 .inverter-reference { padding-top: 14px; border-top: 1px solid var(--line); }
 .inverter-demo .inverter-reference input { width: 120px; }
+.inverter-pedal { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; margin: 12px 0; }
+.inverter-pedal output { font-variant-numeric: tabular-nums; }
+.inverter-pedal input, .inverter-pedal small { grid-column: 1 / -1; }
+.inverter-pedal input { width: 100%; accent-color: var(--accent); }
 @media (max-width: 1050px) {
   #dynamics.active.inverter-demo { grid-template-columns: minmax(0, 1fr); }
 }

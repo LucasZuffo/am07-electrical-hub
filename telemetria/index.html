@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080a0c">
+  <title>UFPR Formula — Telemetria-EV · Protótipo v0.8</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20261111-3">
+  <style>
+    .dashboard-return { display:flex; align-items:center; gap:10px; padding:8px; margin-bottom:8px; border:1px solid currentColor; border-radius:6px; color:var(--text); font-size:12px; text-decoration:none; }
+    .dashboard-return:hover, .dashboard-return:focus-visible { color:var(--accent); }
+    .dashboard-return svg { width:18px; height:18px; flex:none; }
+    @media (max-width:1100px) {
+      .dashboard-return { justify-content:center; }
+      .dashboard-return span { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div>
+          <strong>UFPR Formula</strong>
+          <small>TELEMETRIA-EV  AM-07</small>
+          <small>By:Kawan Caetani</small>
+        </div>
+      </div>
+
+      <a class="dashboard-return" href="../index.html" aria-label="Voltar à Central de Elétrica" title="Voltar à Central de Elétrica">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+        <span>Central de Elétrica</span>
+      </a>
+      <nav class="nav" aria-label="Navegação principal">
+        <button class="nav-item active" data-page="overview" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg>
+          <span>Visão geral</span>
+        </button>
+        <button class="nav-item" data-page="suspension" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6v3l-2 2 2 2-2 2 2 2-2 2 2 2v5H9v-3l2-2-2-2 2-2-2-2 2-2-2-2 2-2-2-2V2Z"/></svg>
+          <span>Suspensão</span>
+        </button>
+        <button class="nav-item" data-page="tires" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c4.4 0 8 1.8 8 4v12c0 2.2-3.6 4-8 4s-8-1.8-8-4V6c0-2.2 3.6-4 8-4Zm0 2C8.4 4 6 5.2 6 6s2.4 2 6 2 6-1.2 6-2-2.4-2-6-2Zm-6 5v2c1.4.7 3.5 1 6 1s4.6-.3 6-1V9c-1.6.7-3.7 1-6 1S7.6 9.7 6 9Zm0 6v3c0 .8 2.4 2 6 2s6-1.2 6-2v-3c-1.6.7-3.7 1-6 1s-4.4-.3-6-1Z"/></svg>
+          <span>Pneus</span>
+        </button>
+        <button class="nav-item" data-page="dynamics" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95l-3.54 3.54L14.83 12 21 5.83 19.59 4.4l-1.23 1.23A8.96 8.96 0 0 0 12 3Z"/></svg>
+          <span>Dinâmica</span>
+        </button>
+        <button class="nav-item" data-page="chassis" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14l2 5-2 11H5L3 9l2-5Zm1.4 2-1.2 3 1.5 9h10.6l1.5-9-1.2-3H6.4Zm1.1 4h9v2h-9v-2Zm1 4h7v2h-7v-2Z"/></svg>
+          <span>Chassis</span>
+        </button>
+        <button class="nav-item" data-page="brakes" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10h-2a8 8 0 1 1-8-8V2Zm1 2v8l5.7 3.4 1-1.7-4.7-2.8V4h-2Zm-6 7h4v2H7v-2Z"/></svg>
+          <span>Freios</span>
+        </button>
+        <button class="nav-item" data-page="bearing" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14Zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>
+          <span>Mancal</span>
+        </button>
+        <button class="nav-item" data-page="development" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h2v5h-2v4h2v5h-2v2H7v-2H5v-5h2v-4H5V5h2V3Zm2 2v14h6V5H9Zm-2 2v1h2V7H7Zm8 0v1h2V7h-2ZM7 16v1h2v-1H7Zm8 0v1h2v-1h-2Z"/></svg>
+          <span>Monitoramento do chicote</span>
+        </button>
+        <button class="nav-item" data-page="database" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7.6 2 4 3.8 4 6v12c0 2.2 3.6 4 8 4s8-1.8 8-4V6c0-2.2-3.6-4-8-4Zm0 2c3.7 0 6 1.2 6 2s-2.3 2-6 2-6-1.2-6-2 2.3-2 6-2Zm-6 5c1.5.7 3.6 1 6 1s4.5-.3 6-1v3c0 .8-2.3 2-6 2s-6-1.2-6-2V9Zm0 6c1.5.7 3.6 1 6 1s4.5-.3 6-1v3c0 .8-2.3 2-6 2s-6-1.2-6-2v-3Z"/></svg>
+          <span>Banco de dados do carro</span>
+        </button>
+      </nav>
+      <div class="sr-only" id="telemetryAlertAnnouncer" role="status" aria-live="polite" aria-atomic="true"></div>
+
+      <div class="sidebar-bottom">
+        <div class="connection-card" id="connectionCard" data-state="simulation">
+          <div class="connection-row">
+            <span class="status-dot" id="connectionStatusDot"></span>
+            <div>
+              <small>ENTRADA DE DADOS</small>
+              <strong id="connectionTransport">Simulação local</strong>
+              <span class="connection-state" id="connectionState" aria-live="polite">Dados demonstrativos</span>
+            </div>
+          </div>
+          <button id="connectionButton" type="button">Configurar entrada</button>
+        </div>
+        <div class="version">PROTÓTIPO UI · v0.6</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">SESSÃO AO VIVO</p>
+          <h1 id="pageTitle">Visão geral</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="session-timer">
+            <small>TEMPO DE SESSÃO</small>
+            <strong id="sessionTimer">00:12:48</strong>
+          </div>
+          <div class="divider"></div>
+          <div class="recording" id="recordingIndicator" data-state="simulation">
+            <span></span>
+            <b id="recordingState">DEMONSTRAÇÃO</b>
+          </div>
+          <button class="icon-button data-source-button" id="compactConnectionButton" type="button" aria-label="Configurar entrada de dados" title="Configurar entrada de dados">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 1 8.72 6.75h-2.1a7 7 0 0 0-13.24 0h-2.1A9 9 0 0 1 12 3Zm0 4a5 5 0 0 1 4.58 3h-2.35a3 3 0 0 0-4.46 0H7.42A5 5 0 0 1 12 7Zm0 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm-1 5h2v5h-2v-5Z"/></svg>
+          </button>
+          <button class="icon-button" id="pauseButton" type="button" aria-label="Pausar atualização">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="page active" id="overview">
+        <div class="section-heading">
+          <div>
+            <span class="section-index">01</span>
+            <h2>Estado do veículo</h2>
+          </div>
+          <p>Leitura consolidada dos sensores do carro elétrico, preparada para USB direto, receptor USB por rádio frequência e nuvem MQTT.</p>
+        </div>
+
+        <div class="overview-grid">
+          <button class="summary-card suspension-summary" data-go="suspension" type="button">
+            <div class="card-topline">
+              <span>CURSO DA SUSPENSÃO</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="mini-suspension-grid">
+              <div><small>DIANTEIRA E.</small><strong><span data-value="susp-fl">42</span><em>mm</em></strong><i><b style="--fill: 42%"></b></i></div>
+              <div><small>DIANTEIRA D.</small><strong><span data-value="susp-fr">39</span><em>mm</em></strong><i><b style="--fill: 39%"></b></i></div>
+              <div><small>TRASEIRA E.</small><strong><span data-value="susp-rl">31</span><em>mm</em></strong><i><b style="--fill: 31%"></b></i></div>
+              <div><small>TRASEIRA D.</small><strong><span data-value="susp-rr">34</span><em>mm</em></strong><i><b style="--fill: 34%"></b></i></div>
+            </div>
+          </button>
+
+          <button class="summary-card ev-summary" data-go="dynamics" type="button">
+            <div class="card-topline">
+              <span>POWERTRAIN ELÉTRICO</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="speed-content ev-layout">
+              <div class="speed-number">
+                <strong data-value="speed">128</strong>
+                <span>km/h</span>
+              </div>
+              <div class="rpm-compact">
+                <div><span>MOTOR</span><strong><span data-value="rpm">6.420</span> rpm</strong></div>
+                <i><b style="--rpm: 71%"></b></i>
+                <div class="rpm-labels"><span>0</span><span>9.000</span></div>
+              </div>
+              <div class="torque-compact">
+                <small>TORQUE</small>
+                <strong><span data-value="torque">184</span><em>Nm</em></strong>
+                <small>POTÊNCIA <b data-value="power">62</b> kW</small>
+              </div>
+            </div>
+          </button>
+
+          <button class="summary-card chassis-summary" data-go="chassis" type="button">
+            <div class="card-topline">
+              <span>DEFORMAÇÃO DO CHASSIS</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="mini-chassis">
+              <svg class="mini-cad-chassis" viewBox="0 0 360 190" aria-label="Miniatura do chassis tubular com quatro pontos de extensometria">
+                <defs>
+                  <linearGradient id="miniTubeGlow" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#323b40"/>
+                    <stop offset=".5" stop-color="#101417"/>
+                    <stop offset="1" stop-color="#3b4449"/>
+                  </linearGradient>
+                </defs>
+                <path class="mini-ground" d="M18 153H342"/>
+                <path class="mini-panel" d="M28 98 95 108 142 91 208 108 288 104 340 128 288 141 170 143 94 137 28 126Z"/>
+                <g class="mini-tubes">
+                  <path d="M28 98 95 108 142 91 208 108 288 104 340 128"/>
+                  <path d="M28 126 94 137 170 143 220 140 288 141 340 128"/>
+                  <path d="M28 98 28 126M95 108 94 137M142 91 170 143M208 108 220 140M288 104 288 141"/>
+                  <path d="M28 98 94 137M28 126 95 108M95 108 170 143M142 91 94 137M142 91 208 108M208 108 170 143"/>
+                  <path d="M208 108 288 141M220 140 288 104M288 104 340 128"/>
+                  <path d="M208 140 208 47M229 140 228 51M208 47Q218 25 228 51M228 51 340 128M236 62 350 132"/>
+                </g>
+                <g class="mini-joints">
+                  <circle cx="95" cy="108" r="3"/><circle cx="94" cy="137" r="3"/><circle cx="142" cy="91" r="3"/><circle cx="208" cy="108" r="3"/>
+                  <circle cx="220" cy="140" r="3"/><circle cx="288" cy="104" r="3"/><circle cx="288" cy="141" r="3"/><circle cx="228" cy="51" r="3"/>
+                </g>
+                <g class="mini-measure-points">
+                  <g transform="translate(94 137)"><circle r="7"/><text x="-22" y="24">SG-01</text></g>
+                  <g transform="translate(142 91)"><circle r="7"/><text x="-22" y="-14">SG-02</text></g>
+                  <g transform="translate(220 140)"><circle r="7"/><text x="10" y="24">SG-03</text></g>
+                  <g transform="translate(288 141)"><circle r="7"/><text x="10" y="24">SG-04</text></g>
+                </g>
+                <path class="mini-orange-tip" d="M340 128 355 125 359 129 344 133Z"/>
+              </svg>
+              <div>
+                <small>DEFORMAÇÃO LATERAL</small>
+                <strong><span data-value="chassis-lat">0.42</span><em>mm</em></strong>
+                <p>Extensômetros comparando lado esquerdo e direito em curva.</p>
+              </div>
+            </div>
+          </button>
+
+          <button class="summary-card brake-summary" data-go="brakes" type="button">
+            <div class="card-topline">
+              <span>PRESSÃO DA LINHA DE FREIO</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="brake-mini">
+              <div class="brake-bar"><span style="--pressure: 61%"></span></div>
+              <div>
+                <small>PRESSÃO DIANTEIRA</small>
+                <strong><span data-value="brake-front">42.8</span><em>bar</em></strong>
+                <small>PRESSÃO TRASEIRA</small>
+                <strong><span data-value="brake-rear">31.4</span><em>bar</em></strong>
+              </div>
+            </div>
+          </button>
+
+          <button class="summary-card tires-summary" data-go="tires" type="button">
+            <div class="card-topline">
+              <span>ESTADO DOS PNEUS</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="mini-tire-grid">
+              <div class="mini-tire"><span>DE</span><i><b style="--heat: 62%"></b></i><strong><span data-value="temp-fl">87</span>°</strong></div>
+              <div class="mini-tire"><span>DD</span><i><b style="--heat: 58%"></b></i><strong><span data-value="temp-fr">84</span>°</strong></div>
+              <div class="mini-tire"><span>TE</span><i><b style="--heat: 52%"></b></i><strong><span data-value="temp-rl">81</span>°</strong></div>
+              <div class="mini-tire"><span>TD</span><i><b style="--heat: 54%"></b></i><strong><span data-value="temp-rr">82</span>°</strong></div>
+            </div>
+          </button>
+
+          <button class="summary-card bearing-summary" data-go="bearing" type="button">
+            <div class="card-topline">
+              <span>VIBRAÇÃO DO MANCAL</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="bearing-mini">
+              <div class="bearing-icon"><span></span><span></span><span></span></div>
+              <div>
+                <small>RMS</small>
+                <strong><span data-value="bearing-rms">1.8</span><em>mm/s</em></strong>
+                <small>PICO</small>
+                <strong><span data-value="bearing-peak">4.6</span><em>g</em></strong>
+              </div>
+            </div>
+          </button>
+
+          <button class="summary-card harness-summary" data-go="development" type="button">
+            <div class="card-topline">
+              <span>MONITORAMENTO DO CHICOTE</span>
+              <span class="card-arrow">↗</span>
+            </div>
+            <div class="wire-summary">
+              <div class="wire-score">
+                <strong><span data-value="wire-ok-count">21</span>/<span data-value="wire-total-count">23</span></strong>
+                <small>FIOS DENTRO DA FAIXA</small>
+              </div>
+              <div class="wire-lines">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span class="wire-line-red"></span>
+              </div>
+            </div>
+          </button>
+
+          <div class="summary-card comms-summary">
+            <div class="card-topline">
+              <span>PROTOCOLO DE COMUNICAÇÃO</span>
+              <span class="live-tag" id="liveTag" data-state="simulation">DEMO</span>
+            </div>
+            <div class="protocol-lanes">
+              <div><small>USB DIRETO</small><strong>COM · 115200</strong><span>telemetria local</span></div>
+              <div><small>USB RF</small><strong><span data-value="rssi">-61</span> dBm</strong><span>gateway rádio</span></div>
+              <div class="mqtt-protocol-lane" data-mqtt-state="offline"><small>MQTT NUVEM</small><strong data-value="mqtt-status">OFFLINE</strong><span><span data-value="mqtt-latency">--</span> ms · QoS 1</span></div>
+              <div><small>PERDA</small><strong><span data-value="packet-loss">0.4</span>%</strong><span>CRC + sequência</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="suspension">
+        <div class="section-heading">
+          <div><span class="section-index">02</span><h2>Suspensão</h2></div>
+          <p>Curso, velocidade de compressão e histórico por roda.</p>
+        </div>
+        <div class="sensor-grid four">
+          <article class="sensor-card suspension-card">
+            <div class="sensor-card-header"><div><small>DIANTEIRA</small><h3>Esquerda</h3></div><span class="sensor-id">SUS-01</span></div>
+            <div class="shock-visual"><svg viewBox="0 0 120 280" aria-hidden="true"><path class="shock-outer" d="M46 10h28v46H46zM52 56h16v41H52zM40 97h40v103H40zM50 200h20v49H50zM42 249h36v21H42z"/><path class="shock-spring" d="M41 76 78 91 41 109 78 127 41 145 78 163 41 181 78 199"/></svg><div class="travel-readout"><small>CURSO ATUAL</small><strong><span data-value="susp-fl">42</span><em>mm</em></strong><div class="range"><span>MÍN 8</span><span>MÁX 92</span></div></div></div>
+            <div class="sparkline"><svg viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 41 18 36 36 42 54 18 72 30 90 23 108 45 126 38 144 16 162 25 180 20 198 41 216 34 234 43 252 21 270 28 300 18"/></svg></div>
+          </article>
+          <article class="sensor-card suspension-card">
+            <div class="sensor-card-header"><div><small>DIANTEIRA</small><h3>Direita</h3></div><span class="sensor-id">SUS-02</span></div>
+            <div class="shock-visual"><svg viewBox="0 0 120 280" aria-hidden="true"><path class="shock-outer" d="M46 10h28v46H46zM52 56h16v41H52zM40 97h40v103H40zM50 200h20v49H50zM42 249h36v21H42z"/><path class="shock-spring" d="M41 76 78 91 41 109 78 127 41 145 78 163 41 181 78 199"/></svg><div class="travel-readout"><small>CURSO ATUAL</small><strong><span data-value="susp-fr">39</span><em>mm</em></strong><div class="range"><span>MÍN 7</span><span>MÁX 89</span></div></div></div>
+            <div class="sparkline"><svg viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 37 18 42 36 26 54 31 72 17 90 28 108 41 126 34 144 42 162 19 180 26 198 16 216 37 234 31 252 43 270 25 300 30"/></svg></div>
+          </article>
+          <article class="sensor-card suspension-card">
+            <div class="sensor-card-header"><div><small>TRASEIRA</small><h3>Esquerda</h3></div><span class="sensor-id">SUS-03</span></div>
+            <div class="shock-visual"><svg viewBox="0 0 120 280" aria-hidden="true"><path class="shock-outer" d="M46 10h28v46H46zM52 56h16v41H52zM40 97h40v103H40zM50 200h20v49H50zM42 249h36v21H42z"/><path class="shock-spring" d="M41 76 78 91 41 109 78 127 41 145 78 163 41 181 78 199"/></svg><div class="travel-readout"><small>CURSO ATUAL</small><strong><span data-value="susp-rl">31</span><em>mm</em></strong><div class="range"><span>MÍN 5</span><span>MÁX 76</span></div></div></div>
+            <div class="sparkline"><svg viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 40 18 31 36 37 54 34 72 43 90 22 108 29 126 18 144 32 162 28 180 45 198 39 216 20 234 27 252 17 270 37 300 32"/></svg></div>
+          </article>
+          <article class="sensor-card suspension-card">
+            <div class="sensor-card-header"><div><small>TRASEIRA</small><h3>Direita</h3></div><span class="sensor-id">SUS-04</span></div>
+            <div class="shock-visual"><svg viewBox="0 0 120 280" aria-hidden="true"><path class="shock-outer" d="M46 10h28v46H46zM52 56h16v41H52zM40 97h40v103H40zM50 200h20v49H50zM42 249h36v21H42z"/><path class="shock-spring" d="M41 76 78 91 41 109 78 127 41 145 78 163 41 181 78 199"/></svg><div class="travel-readout"><small>CURSO ATUAL</small><strong><span data-value="susp-rr">34</span><em>mm</em></strong><div class="range"><span>MÍN 6</span><span>MÁX 81</span></div></div></div>
+            <div class="sparkline"><svg viewBox="0 0 300 60" preserveAspectRatio="none"><path d="M0 29 18 37 36 41 54 21 72 28 90 16 108 33 126 27 144 45 162 38 180 23 198 31 216 18 234 26 252 40 270 34 300 20"/></svg></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="tires">
+        <div class="section-heading">
+          <div><span class="section-index">03</span><h2>Pneus</h2></div>
+          <p>Temperatura, pressão e velocidade individual por roda.</p>
+        </div>
+        <div class="sensor-grid four">
+          <article class="sensor-card tire-card"><div class="sensor-card-header"><div><small>DIANTEIRA</small><h3>Esquerda</h3></div><span class="sensor-id good" data-tire-status="fl">ESTÁVEL</span></div><div class="tire-visual"><div class="tire-shape"><span></span><span></span><span></span></div><div class="temperature"><small>TEMPERATURA</small><strong><span data-value="temp-fl">87</span><em>°C</em></strong></div></div><div class="metric-pair"><div><small>PRESSÃO</small><strong><span data-value="tire-pressure-fl">2.18</span> <em>bar</em></strong></div><div><small>VELOCIDADE</small><strong><span data-value="wheel-fl">128</span> <em>km/h</em></strong></div></div></article>
+          <article class="sensor-card tire-card"><div class="sensor-card-header"><div><small>DIANTEIRA</small><h3>Direita</h3></div><span class="sensor-id good" data-tire-status="fr">ESTÁVEL</span></div><div class="tire-visual"><div class="tire-shape"><span></span><span></span><span></span></div><div class="temperature"><small>TEMPERATURA</small><strong><span data-value="temp-fr">84</span><em>°C</em></strong></div></div><div class="metric-pair"><div><small>PRESSÃO</small><strong><span data-value="tire-pressure-fr">2.16</span> <em>bar</em></strong></div><div><small>VELOCIDADE</small><strong><span data-value="wheel-fr">129</span> <em>km/h</em></strong></div></div></article>
+          <article class="sensor-card tire-card"><div class="sensor-card-header"><div><small>TRASEIRA</small><h3>Esquerda</h3></div><span class="sensor-id warm" data-tire-status="rl">AQUECENDO</span></div><div class="tire-visual"><div class="tire-shape"><span></span><span></span><span></span></div><div class="temperature"><small>TEMPERATURA</small><strong><span data-value="temp-rl">81</span><em>°C</em></strong></div></div><div class="metric-pair"><div><small>PRESSÃO</small><strong><span data-value="tire-pressure-rl">2.09</span> <em>bar</em></strong></div><div><small>VELOCIDADE</small><strong><span data-value="wheel-rl">127</span> <em>km/h</em></strong></div></div></article>
+          <article class="sensor-card tire-card"><div class="sensor-card-header"><div><small>TRASEIRA</small><h3>Direita</h3></div><span class="sensor-id good" data-tire-status="rr">ESTÁVEL</span></div><div class="tire-visual"><div class="tire-shape"><span></span><span></span><span></span></div><div class="temperature"><small>TEMPERATURA</small><strong><span data-value="temp-rr">82</span><em>°C</em></strong></div></div><div class="metric-pair"><div><small>PRESSÃO</small><strong><span data-value="tire-pressure-rr">2.11</span> <em>bar</em></strong></div><div><small>VELOCIDADE</small><strong><span data-value="wheel-rr">128</span> <em>km/h</em></strong></div></div></article>
+        </div>
+      </section>
+
+      <section class="page" id="dynamics">
+        <div class="section-heading">
+          <div><span class="section-index">04</span><h2>Dinâmica</h2></div>
+          <button class="primary-button inverter-demo-entry" type="button" id="startInverterDemo">Simular inversor</button>
+        </div>
+        <div class="dynamics-grid">
+          <article class="sensor-card vehicle-attitude">
+            <div class="sensor-card-header"><div><small>IMU · 6 EIXOS</small><h3>Atitude do veículo</h3></div><span class="sensor-id good">ONLINE</span></div>
+            <div class="car-blueprint">
+              <div class="measure roll-measure"><span>ROLL</span><strong data-value="roll">1.2°</strong></div>
+              <svg viewBox="0 0 360 620" aria-label="Planta superior do veículo"><path class="body" d="M180 17 112 37 73 102l-15 98 12 137-17 156 30 95h194l30-95-17-156 12-137-15-98-39-65-68-20Z"/><path class="glass" d="m116 100 31-44h66l31 44 17 116H99l17-116Zm-14 284h156l-20 160H122l-20-160Z"/><path class="line" d="M72 271h216M84 348h192M180 17v571"/><path class="wheel" d="M42 119h31v102H42zM287 119h31v102h-31zM42 392h31v102H42zM287 392h31v102h-31z"/></svg>
+              <div class="measure yaw-measure"><span>YAW</span><strong data-value="yaw">0.8°</strong></div>
+            </div>
+          </article>
+
+          <article class="sensor-card gauge-card">
+            <div class="sensor-card-header"><div><small>INVERSOR + MOTOR</small><h3>Velocidade & rotação</h3></div><span class="sensor-id">EV-07</span></div>
+            <div class="main-gauge">
+              <svg viewBox="0 0 360 240" aria-hidden="true"><path class="gauge-track" d="M40 199a145 145 0 1 1 280 0"/><path class="gauge-progress" d="M40 199a145 145 0 1 1 280 0"/><g class="ticks"><path d="M47 180 30 177M67 120 52 110M111 76 101 61M180 58V38M249 76l10-15M293 120l15-10M313 180l17-3"/></g></svg>
+              <div class="gauge-center" id="dynamicsRoadSpeed"><small>VELOCIDADE</small><strong data-value="speed">128</strong><span>KM/H</span></div>
+              <div class="gauge-center" id="dynamicsMotorRpm" hidden><small>ROTAÇÃO DO MOTOR</small><strong data-value="rpm">--</strong><span>RPM</span></div>
+            </div>
+            <div class="metric-row three">
+              <div><small>ROTAÇÃO MOTOR</small><strong><span data-value="rpm">6.420</span> <em>RPM</em></strong></div>
+              <div><small id="inverterTorqueLabel">TORQUE</small><strong><span data-value="torque">184</span> <em>Nm</em></strong></div>
+              <div><small id="inverterPowerLabel">POTÊNCIA</small><strong><span data-value="power">62</span> <em>kW</em></strong></div>
+            </div>
+            <div class="metric-row three" id="inverterDemoCurrents" hidden>
+              <div><small>CORRENTE Id</small><strong><span data-value="inverter-id">--</span> <em>A</em></strong></div>
+              <div><small>CORRENTE Iq</small><strong><span data-value="inverter-iq">--</span> <em>A</em></strong></div>
+              <div><small>BARRAMENTO CC</small><strong><span data-value="inverter-vbus">--</span> <em>V</em></strong></div>
+            </div>
+            <div id="inverterDemoControls" hidden>
+              <form class="inverter-toolbar inverter-reference" id="inverterDemoForm">
+                <label>Modo de controle
+                  <select id="inverterDemoMode"><option value="1">Velocidade</option><option value="0">Torque</option></select>
+                </label>
+                <label id="inverterDemoRpmField">Referência (rpm) <input id="inverterDemoRpm" type="number" min="-5500" max="5500" step="1" required></label>
+                <label id="inverterDemoTorqueField" hidden>Referência (Nm) <input id="inverterDemoTorque" type="number" min="-.437" max=".437" step=".001" required></label>
+                <label>Limite de Iq (A) <input id="inverterDemoCurrent" type="number" min="0" max="12" step="any" required></label>
+                <label>Carga simulada (%) <input id="inverterDemoLoad" type="number" min="0" max="100" step="1" required></label>
+                <button class="primary-button" type="submit">Aplicar referências</button>
+              </form>
+            </div>
+          </article>
+
+          <article class="sensor-card gforce-card">
+            <div class="sensor-card-header"><div><small>ACELERÔMETRO</small><h3>Força G</h3></div><span class="sensor-id">IMU-02</span></div>
+            <div class="gforce-plot">
+              <div class="g-ring ring-1"></div><div class="g-ring ring-2"></div><div class="g-ring ring-3"></div>
+              <div class="cross x"></div><div class="cross y"></div><span class="g-dot"></span>
+              <small class="axis-label top">+ LONG.</small><small class="axis-label bottom">− LONG.</small><small class="axis-label left">− LAT.</small><small class="axis-label right">+ LAT.</small>
+            </div>
+            <div class="metric-pair"><div><small>LATERAL</small><strong><span data-value="g-lat">0.74</span> <em>G</em></strong></div><div><small>LONGITUDINAL</small><strong><span data-value="g-long">0.31</span> <em>G</em></strong></div></div>
+          </article>
+        </div>
+        <article class="sensor-card inverter-panel" id="inverterPanel" hidden>
+          <div class="sensor-card-header">
+            <div><small id="inverterPanelMode">USB SERIAL • F28379D</small><h3>Inversor em bancada</h3></div>
+            <span class="sensor-id" id="inverterState">SEM CONEXÃO</span>
+          </div>
+          <div class="inverter-toolbar" id="inverterSerialToolbar">
+            <label>Porta COM <select id="inverterPort" aria-label="Porta COM do inversor" disabled><option value="">Selecione uma porta</option></select></label>
+            <button type="button" class="secondary-button" id="inverterRefresh" disabled>Atualizar lista</button>
+            <button type="button" class="primary-button" id="inverterConnect" disabled>Conectar MCU</button>
+            <button type="button" class="secondary-button" id="inverterDisconnect" disabled>Desconectar MCU</button>
+          </div>
+          <p class="inverter-status" id="inverterStatus" role="status"></p>
+          <div class="metric-row three">
+            <div><small>BARRAMENTO CC</small><strong><span data-value="inverter-vbus">--</span> <em>V</em></strong></div>
+            <div><small>FALHAS DO INVERSOR</small><strong id="inverterFault">--</strong></div>
+            <div><small>AVISOS DO INVERSOR</small><strong id="inverterWarning">--</strong></div>
+          </div>
+          <details class="inverter-details" id="inverterParamDetails" open>
+            <summary>Parâmetros do firmware</summary>
+            <form class="inverter-toolbar" id="inverterParamForm">
+              <label>Buscar parâmetro <input type="search" id="inverterSearch" placeholder="Nome ou descrição" disabled></label>
+              <label>Parâmetro <select id="inverterParam" disabled><option value="">Selecione um parâmetro</option></select></label>
+              <button type="button" class="secondary-button" id="inverterRead" disabled>Ler do MCU</button>
+              <label>Valor <input type="number" step="any" id="inverterParamValue" disabled></label>
+              <button type="submit" class="primary-button" id="inverterWrite" disabled>Gravar no MCU</button>
+            </form>
+            <p class="inverter-status" id="inverterParamHelp">O catálogo é carregado ao conectar o MCU.</p>
+          </details>
+          <details class="inverter-details" id="inverterScopeDetails">
+            <summary>Osciloscópio</summary>
+            <form id="inverterScopeForm">
+              <fieldset id="inverterChannels" class="inverter-channels" disabled>
+                <legend>Sinais</legend>
+              </fieldset>
+              <div class="inverter-toolbar">
+                <label>Decimação <input id="inverterDecimation" type="number" min="1" max="65535" value="1" required></label>
+                <label>Intervalo ao vivo (ms) <input id="inverterScopeInterval" type="number" min="50" max="5000" value="250" required></label>
+                <button class="primary-button" id="inverterCapture" type="submit" disabled>Capturar sinais</button>
+                <button class="secondary-button" id="inverterLiveScope" type="button" aria-pressed="false" disabled>Iniciar ao vivo</button>
+                <button class="secondary-button" id="inverterScopeCsv" type="button" disabled>Salvar captura em CSV</button>
+              </div>
+            </form>
+            <p class="inverter-status" id="inverterScopeStatus" role="status"></p>
+            <div class="inverter-plots" id="inverterPlots"></div>
+          </details>
+          <details class="inverter-details" id="inverterCommandDetails">
+            <summary>Comandos de bancada</summary>
+            <div class="inverter-toolbar" id="inverterCommands">
+              <button class="secondary-button" type="button" data-inverter-command="align" disabled>Calibrar / alinhar</button>
+              <button class="primary-button" type="button" data-inverter-command="run" disabled>Rodar</button>
+              <button class="secondary-button" type="button" data-inverter-command="stop" disabled>Parar</button>
+              <button class="secondary-button" type="button" data-inverter-command="clear_fault" disabled>Limpar falha</button>
+              <button class="secondary-button" type="button" data-inverter-command="inject_fault" id="inverterInjectFault" hidden disabled>Simular falha</button>
+            </div>
+          </details>
+        </article>
+      </section>
+
+      <section class="page" id="chassis">
+        <div class="section-heading">
+          <div><span class="section-index">05</span><h2>Deformação mecânica do chassis</h2></div>
+          <p>Extensômetros medindo variação lateral, torção e diferença entre longarinas durante curva.</p>
+        </div>
+        <div class="chassis-layout">
+          <article class="sensor-card chassis-map">
+            <div class="sensor-card-header"><div><small>STRAIN GAUGE ARRAY</small><h3>Mapa de extensômetros</h3></div><span class="sensor-id good">SG-BUS</span></div>
+            <div class="frame-map">
+              <svg class="cad-chassis" viewBox="0 0 980 430" aria-label="Chassis tubular tipo Formula inspirado em CAD com quatro pontos laterais de medição">
+                <defs>
+                  <linearGradient id="tubeGlow" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#384248"/>
+                    <stop offset=".48" stop-color="#111518"/>
+                    <stop offset="1" stop-color="#242b30"/>
+                  </linearGradient>
+                  <linearGradient id="tubeEdge" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#c7d0d4" stop-opacity=".88"/>
+                    <stop offset=".55" stop-color="#deff47" stop-opacity=".46"/>
+                    <stop offset="1" stop-color="#4dbde8" stop-opacity=".68"/>
+                  </linearGradient>
+                  <filter id="pointGlow" x="-70%" y="-70%" width="240%" height="240%">
+                    <feGaussianBlur stdDeviation="5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+
+                <path class="cad-ground" d="M52 358H925"/>
+                <path class="cad-shadow" d="M79 321 242 346 474 350 655 349 875 342 938 360 802 382 475 378 200 368Z"/>
+
+                <g class="cad-reference">
+                  <path d="M78 80h812"/>
+                  <text x="82" y="67">referência CAD · chassis tubular spaceframe</text>
+                </g>
+
+                <g class="cad-panels">
+                  <path d="M72 250 250 283 250 342 72 318Z"/>
+                  <path d="M250 283 364 246 474 283 585 286 585 346 474 350 360 344 250 342Z"/>
+                  <path d="M585 286 755 282 898 300 944 337 805 349 654 346 585 346Z"/>
+                  <path d="M590 106 620 104 625 346 586 346Z"/>
+                </g>
+
+                <g class="cad-tubes">
+                  <path d="M72 250 250 283 364 246 474 283 585 286 755 282 898 300 944 337"/>
+                  <path d="M72 318 250 342 360 344 474 350 585 346 654 346 805 349 944 337"/>
+                  <path d="M72 250 72 318M250 283 250 342M364 246 360 344M474 283 474 350M585 286 585 346M755 282 805 349M898 300 944 337"/>
+                  <path d="M72 250 250 342M72 318 250 283M250 283 360 344M364 246 250 342M364 246 474 350M474 283 360 344"/>
+                  <path d="M474 283 585 346M585 286 474 350M585 286 654 346M654 346 755 282M755 282 805 349M805 349 898 300M898 300 805 349"/>
+                  <path d="M250 283 364 246 585 286M250 342 474 350 585 346"/>
+                  <path d="M364 246 418 176 474 283M418 176 585 286M418 176 520 236"/>
+                  <path d="M590 346 592 108M623 346 622 111M592 108Q607 78 622 111M590 236 623 234M590 283 623 276"/>
+                  <path d="M622 111 898 300M648 137 924 322M623 276 898 300"/>
+                  <path d="M644 263 694 246 735 246M704 246 704 280M735 246 735 278"/>
+                  <path d="M776 260 832 260 832 290M776 260 776 292"/>
+                  <path d="M856 314 938 356 958 351"/>
+                </g>
+
+                <g class="cad-edge-lines">
+                  <path d="M72 250 250 283 364 246 474 283 585 286 755 282 898 300 944 337"/>
+                  <path d="M72 318 250 342 360 344 474 350 585 346 654 346 805 349 944 337"/>
+                  <path d="M590 346 592 108M623 346 622 111M622 111 898 300M648 137 924 322"/>
+                </g>
+
+                <g class="cad-joints">
+                  <circle cx="72" cy="250" r="7"/><circle cx="72" cy="318" r="7"/><circle cx="250" cy="283" r="7"/><circle cx="250" cy="342" r="7"/>
+                  <circle cx="364" cy="246" r="7"/><circle cx="360" cy="344" r="7"/><circle cx="474" cy="283" r="7"/><circle cx="474" cy="350" r="7"/>
+                  <circle cx="585" cy="286" r="7"/><circle cx="585" cy="346" r="7"/><circle cx="622" cy="111" r="7"/><circle cx="898" cy="300" r="7"/>
+                </g>
+
+                <path class="cad-orange-tip" d="M938 356 967 349 976 356 947 364Z"/>
+
+                <g class="measurement-points cad-measure-points">
+                  <g class="measure-point" transform="translate(250 342)">
+                    <circle r="15"/><circle r="5"/>
+                    <path d="M-18 14-62 44"/>
+                    <text x="-135" y="61">SG-01</text>
+                    <text class="point-note" x="-135" y="76">longarina inferior</text>
+                  </g>
+                  <g class="measure-point" transform="translate(364 246)">
+                    <circle r="15"/><circle r="5"/>
+                    <path d="M-10 -16-48 -56"/>
+                    <text x="-126" y="-68">SG-02</text>
+                    <text class="point-note" x="-126" y="-53">nó dianteiro</text>
+                  </g>
+                  <g class="measure-point" transform="translate(585 346)">
+                    <circle r="15"/><circle r="5"/>
+                    <path d="M18 13 67 52"/>
+                    <text x="76" y="64">SG-03</text>
+                    <text class="point-note" x="76" y="79">base arco</text>
+                  </g>
+                  <g class="measure-point" transform="translate(805 349)">
+                    <circle r="15"/><circle r="5"/>
+                    <path d="M18 9 63 38"/>
+                    <text x="72" y="49">SG-04</text>
+                    <text class="point-note" x="72" y="64">triangulação traseira</text>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </article>
+          <article class="sensor-card strain-readouts">
+            <div class="sensor-card-header"><div><small>DEFORMAÇÃO</small><h3>Leituras principais</h3></div><span class="sensor-id">CHS-01</span></div>
+            <div class="big-readout"><small>LATERAL EM CURVA</small><strong><span data-value="chassis-lat">0.42</span><em>mm</em></strong></div>
+            <div class="metric-stack">
+              <div><small>TORÇÃO CHASSIS</small><strong><span data-value="chassis-twist">0.18</span>°</strong></div>
+              <div><small>DIF. ESQ/DIR</small><strong><span data-value="delta-chassis">38</span> µε</strong></div>
+              <div><small>PICO ÚLTIMOS 10 s</small><strong><span data-value="strain-peak">126</span> µε</strong></div>
+            </div>
+          </article>
+          <article class="sensor-card strain-bars">
+            <div class="sensor-card-header"><div><small>EXTENSÔMETROS</small><h3>Canais ativos</h3></div><span class="sensor-id">8 CANAIS</span></div>
+            <div class="channel-bars">
+              <div><span>Longarina esquerda</span><i><b style="--bar: 56%"></b></i><strong><span data-value="strain-left">82</span> µε</strong></div>
+              <div><span>Longarina direita</span><i><b style="--bar: 49%"></b></i><strong><span data-value="strain-right">73</span> µε</strong></div>
+              <div><span>Travessa central</span><i><b style="--bar: 42%"></b></i><strong><span data-value="strain-center">61</span> µε</strong></div>
+              <div><span>Subframe traseiro</span><i><b style="--bar: 35%"></b></i><strong><span data-value="strain-rear">48</span> µε</strong></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="brakes">
+        <div class="section-heading">
+          <div><span class="section-index">06</span><h2>Pressão da linha de freio</h2></div>
+          <p>Monitoramento hidráulico por eixo e por roda, preparado para comparar frenagem regenerativa e mecânica.</p>
+        </div>
+        <div class="brake-layout">
+          <article class="sensor-card brake-main">
+            <div class="sensor-card-header"><div><small>FREIO HIDRÁULICO</small><h3 id="brakeBalanceTitle">Balanceamento de pressão</h3></div><span class="sensor-id good" data-brake-status="online">ONLINE</span></div>
+            <div class="brake-circuit" role="group" aria-labelledby="brakeBalanceTitle">
+              <div class="master-cylinder" data-brake-visual="pedal" style="--pedal-position: 38%">
+                <span class="pedal-indicator" aria-hidden="true"></span>
+                <div class="pedal-readout">
+                  <strong>PEDAL</strong>
+                  <small><span data-value="brake-pedal">38</span><em>%</em></small>
+                  <p>POSIÇÃO DO COMANDO</p>
+                </div>
+              </div>
+              <div class="brake-balance-lines">
+                <div class="brake-line front" data-brake-visual="front" style="--line-pressure: 42.8%">
+                  <div class="brake-line-heading">
+                    <strong>Dianteira</strong>
+                    <small><span data-value="brake-front">42.8</span><em>bar</em></small>
+                  </div>
+                  <div class="brake-line-track" aria-hidden="true"><span></span></div>
+                </div>
+                <div class="brake-line rear" data-brake-visual="rear" style="--line-pressure: 31.4%">
+                  <div class="brake-line-heading">
+                    <strong>Traseira</strong>
+                    <small><span data-value="brake-rear">31.4</span><em>bar</em></small>
+                  </div>
+                  <div class="brake-line-track" aria-hidden="true"><span></span></div>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="sensor-card wheel-pressure"><div class="sensor-card-header"><div><small>RODAS</small><h3>Pressão individual</h3></div><span class="sensor-id">BRK-04</span></div><div class="pressure-grid"><div><small>DE</small><strong><span data-value="brake-fl">43.1</span><em>bar</em></strong></div><div><small>DD</small><strong><span data-value="brake-fr">42.5</span><em>bar</em></strong></div><div><small>TE</small><strong><span data-value="brake-rl">31.2</span><em>bar</em></strong></div><div><small>TD</small><strong><span data-value="brake-rr">31.7</span><em>bar</em></strong></div></div></article>
+          <article class="sensor-card brake-trace"><div class="sensor-card-header"><div><small>HISTÓRICO</small><h3>Curva de frenagem</h3></div><span class="sensor-id">250 Hz</span></div><div class="trace-plot"><svg viewBox="0 0 700 220" preserveAspectRatio="none"><path class="trace-grid" d="M0 44H700M0 88H700M0 132H700M0 176H700"/><path class="trace-a" d="M0 176 38 174 82 166 128 112 174 62 220 56 266 74 312 105 358 132 404 144 450 134 496 118 542 96 588 85 634 101 700 129"/><path class="trace-b" d="M0 184 40 181 84 174 130 138 176 94 222 88 268 99 314 126 360 146 406 153 452 145 498 135 544 119 590 111 636 124 700 148"/></svg></div><div class="metric-row three"><div><small>REGEN</small><strong><span data-value="regen">18</span>%</strong></div><div><small>BIAS</small><strong><span data-value="brake-bias">58</span>/<em>42</em></strong></div><div><small>ALERTA</small><strong data-brake-status="alert">OK</strong></div></div></article>
+        </div>
+      </section>
+
+      <section class="page" id="bearing">
+        <div class="section-heading">
+          <div><span class="section-index">07</span><h2>Vibração do mancal</h2></div>
+          <p>Leituras de vibração para diagnosticar folga, desalinhamento ou início de falha no conjunto do mancal.</p>
+        </div>
+        <div class="bearing-layout">
+          <article class="sensor-card bearing-hero">
+            <div class="sensor-card-header"><div><small>ACELERÔMETRO INDUSTRIAL</small><h3>Mancal principal</h3></div><span class="sensor-id warm">OBSERVAR</span></div>
+            <div class="bearing-large"><span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span><span class="vibe-wave"></span></div>
+            <div class="metric-row three"><div><small>RMS</small><strong><span data-value="bearing-rms">1.8</span> <em>mm/s</em></strong></div><div><small>PICO</small><strong><span data-value="bearing-peak">4.6</span> <em>g</em></strong></div><div><small>TEMP.</small><strong><span data-value="bearing-temp">52</span> <em>°C</em></strong></div></div>
+          </article>
+          <article class="sensor-card spectrum-card">
+            <div class="sensor-card-header"><div><small>FFT SIMULADA</small><h3>Assinatura de frequência</h3></div><span class="sensor-id">2 kHz</span></div>
+            <div class="spectrum">
+              <i style="--h:22%"></i><i style="--h:38%"></i><i style="--h:28%"></i><i style="--h:66%"></i><i style="--h:41%"></i><i style="--h:84%"></i><i style="--h:52%"></i><i style="--h:31%"></i><i style="--h:48%"></i><i style="--h:36%"></i><i style="--h:70%"></i><i style="--h:25%"></i><i style="--h:44%"></i><i style="--h:19%"></i><i style="--h:33%"></i><i style="--h:58%"></i>
+            </div>
+            <div class="metric-pair"><div><small>FREQ. DOMINANTE</small><strong><span data-value="bearing-frequency">184</span> <em>Hz</em></strong></div><div><small>SAÚDE</small><strong><span data-value="bearing-health">91</span><em>%</em></strong></div></div>
+          </article>
+          <article class="sensor-card vibration-log">
+            <div class="sensor-card-header"><div><small>EVENTOS</small><h3>Diagnóstico inicial</h3></div><span class="sensor-id">BETA</span></div>
+            <ul class="event-list">
+              <li><span class="event-dot good"></span><div><strong>Faixa normal</strong><small>RMS abaixo do limite crítico.</small></div></li>
+              <li><span class="event-dot warm"></span><div><strong>Pico intermitente</strong><small>Acompanhar frequência dominante em aceleração.</small></div></li>
+              <li><span class="event-dot good"></span><div><strong>Temperatura estável</strong><small>Sem tendência térmica de falha.</small></div></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="development">
+        <div class="section-heading">
+          <div><span class="section-index">08</span><h2>Monitoramento do chicote</h2></div>
+          <p>Monitorador de tensão do chicote: selecione um fio para inspecionar sua leitura, faixa ideal e condição elétrica.</p>
+        </div>
+        <div class="development-layout">
+          <article class="sensor-card harness-overview">
+            <div class="sensor-card-header">
+              <div><small>CHICOTE ELÉTRICO • 23 CANAIS</small><h3>Monitor de tensão dos fios</h3></div>
+              <span class="sensor-id good">MCU-HARNESS</span>
+            </div>
+            <div class="harness-visual">
+              <div class="dev-car-preview" aria-label="Modelo lateral do carro UFPR Formula EV">
+                <div class="dev-car-caption">
+                  <span>VEÍCULO DE REFERÊNCIA</span>
+                  <strong>UFPR FORMULA EV</strong>
+                </div>
+                <svg viewBox="0 0 420 190" role="img" aria-label="Ilustração estilizada do carro UFPR Formula EV montado em vista lateral">
+                  <defs>
+                    <linearGradient id="devCarBodyPaint" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#2d3438"/>
+                      <stop offset="0.46" stop-color="#111619"/>
+                      <stop offset="1" stop-color="#050708"/>
+                    </linearGradient>
+                    <linearGradient id="devCarYellowPaint" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0" stop-color="#f5ff1a"/>
+                      <stop offset="0.62" stop-color="#e7f500"/>
+                      <stop offset="1" stop-color="#aebc00"/>
+                    </linearGradient>
+                    <radialGradient id="devCarTirePaint" cx="38%" cy="30%" r="72%">
+                      <stop offset="0" stop-color="#303539"/>
+                      <stop offset="0.32" stop-color="#111416"/>
+                      <stop offset="1" stop-color="#030405"/>
+                    </radialGradient>
+                    <radialGradient id="devCarRimPaint" cx="35%" cy="30%" r="75%">
+                      <stop offset="0" stop-color="#aeb6bc"/>
+                      <stop offset="0.45" stop-color="#596268"/>
+                      <stop offset="1" stop-color="#22282c"/>
+                    </radialGradient>
+                    <filter id="devCarSoftShadow" x="-25%" y="-40%" width="150%" height="190%">
+                      <feGaussianBlur stdDeviation="4"/>
+                    </filter>
+                  </defs>
+
+                  <ellipse class="dev-car-shadow" cx="218" cy="166" rx="192" ry="10" filter="url(#devCarSoftShadow)"/>
+
+                  <path class="dev-car-floor" d="M42 144L92 139L171 143L235 145L311 140L374 143L367 151L232 155L91 151L46 150Z"/>
+                  <path class="dev-car-front-wing" d="M7 124L49 120L57 126L44 132L5 134Z"/>
+                  <path class="dev-car-rear-wing" d="M350 94L411 92L409 101L361 106L354 126L345 124Z"/>
+
+                  <path class="dev-car-body-shell" fill="url(#devCarBodyPaint)" d="M13 126Q18 108 39 98L116 77Q139 70 154 80L174 101L216 103Q229 81 250 71Q273 64 294 74L337 100L365 109L359 137L311 146L244 149L202 142L166 122L96 117L62 147L29 143Z"/>
+                  <path class="dev-car-nose-volume" d="M13 126Q18 108 39 98L116 77Q139 70 154 80L158 93L93 103L53 132L29 143Z"/>
+                  <path class="dev-car-yellow-panel" fill="url(#devCarYellowPaint)" d="M20 114Q27 103 44 98L118 79Q138 74 150 82L153 89L91 98L42 121Z"/>
+                  <path class="dev-car-blue-stripe" d="M22 111Q32 102 46 98L118 78Q137 73 149 79"/>
+
+                  <path class="dev-car-sidepod" fill="url(#devCarBodyPaint)" d="M165 103L218 103L239 85L285 83L324 104L311 140L239 147L202 139L165 121Z"/>
+                  <path class="dev-car-tail-cowl" fill="url(#devCarBodyPaint)" d="M249 83Q263 66 287 70L337 99L332 111L292 96L257 93Z"/>
+                  <path class="dev-car-yellow-tail" fill="url(#devCarYellowPaint)" d="M257 82Q272 70 288 74L332 99L329 105L287 91L258 89Z"/>
+
+                  <path class="dev-car-cockpit-opening" d="M217 102Q227 78 249 68Q266 61 283 70L281 82L255 94L238 106Z"/>
+                  <path class="dev-car-seat" d="M238 91L249 75L263 77L264 105L249 111Z"/>
+                  <path class="dev-car-headrest" d="M252 62L268 64L271 79L258 82L248 74Z"/>
+                  <path class="dev-car-roll-outline" d="M240 82C241 52 240 29 252 24C266 20 276 42 279 74"/>
+                  <path class="dev-car-roll-hoop" d="M240 82C241 52 240 29 252 24C266 20 276 42 279 74"/>
+                  <circle class="dev-car-light" cx="272" cy="48" r="5"/>
+
+                  <g class="dev-car-wheel">
+                    <circle class="dev-car-tire" cx="132" cy="145" r="39" fill="url(#devCarTirePaint)"/>
+                    <circle class="dev-car-rim-outer" cx="132" cy="145" r="24" fill="url(#devCarRimPaint)"/>
+                    <circle class="dev-car-rim-inner" cx="132" cy="145" r="17"/>
+                    <path class="dev-car-spokes" d="M132 128V162M115 145H149M120 133L144 157M144 133L120 157"/>
+                    <circle class="dev-car-hub" cx="132" cy="145" r="6"/>
+                  </g>
+                  <g class="dev-car-wheel">
+                    <circle class="dev-car-tire" cx="342" cy="142" r="43" fill="url(#devCarTirePaint)"/>
+                    <circle class="dev-car-rim-outer" cx="342" cy="142" r="26" fill="url(#devCarRimPaint)"/>
+                    <circle class="dev-car-rim-inner" cx="342" cy="142" r="18"/>
+                    <path class="dev-car-spokes" d="M342 124V160M324 142H360M329 129L355 155M355 129L329 155"/>
+                    <circle class="dev-car-hub" cx="342" cy="142" r="6"/>
+                  </g>
+
+                  <path class="dev-car-fender-accent" d="M96 114Q131 94 166 119M305 108Q340 88 372 119"/>
+                  <text class="dev-car-number" x="274" y="119">EV</text>
+                  <text class="dev-car-team-mark" x="72" y="111">UFPR</text>
+                </svg>
+              </div>
+
+              <div class="wire-score corner">
+                <strong>
+                  <span data-value="wire-ok-count">21</span>/<span data-value="wire-total-count">23</span>
+                </strong>
+                <small>FIOS OK</small>
+              </div>
+
+              <div class="harness-stage">
+                <div class="chip-harness" id="chipHarness">
+                  <div class="loom-group loom-top" data-wire-group="top" aria-label="Fios conectados aos pinos superiores do monitor"></div>
+                  <div class="loom-group loom-left" data-wire-group="left" aria-label="Fios conectados aos pinos esquerdos do monitor"></div>
+
+                  <div class="mcu-block">
+                    <svg class="smd-chip" viewBox="0 0 240 240" role="img" aria-label="Microcontrolador SMD do monitor de tensão">
+                      <g class="chip-pins">
+                        <rect x="0" y="46" width="42" height="8" rx="2"/>
+                        <rect x="0" y="74" width="42" height="8" rx="2"/>
+                        <rect x="0" y="102" width="42" height="8" rx="2"/>
+                        <rect x="0" y="130" width="42" height="8" rx="2"/>
+                        <rect x="0" y="158" width="42" height="8" rx="2"/>
+                        <rect x="0" y="186" width="42" height="8" rx="2"/>
+
+                        <rect x="198" y="46" width="42" height="8" rx="2"/>
+                        <rect x="198" y="74" width="42" height="8" rx="2"/>
+                        <rect x="198" y="102" width="42" height="8" rx="2"/>
+                        <rect x="198" y="130" width="42" height="8" rx="2"/>
+                        <rect x="198" y="158" width="42" height="8" rx="2"/>
+                        <rect x="198" y="186" width="42" height="8" rx="2"/>
+
+                        <rect x="46" y="0" width="8" height="42" rx="2"/>
+                        <rect x="74" y="0" width="8" height="42" rx="2"/>
+                        <rect x="102" y="0" width="8" height="42" rx="2"/>
+                        <rect x="130" y="0" width="8" height="42" rx="2"/>
+                        <rect x="158" y="0" width="8" height="42" rx="2"/>
+                        <rect x="186" y="0" width="8" height="42" rx="2"/>
+
+                        <rect x="46" y="198" width="8" height="42" rx="2"/>
+                        <rect x="74" y="198" width="8" height="42" rx="2"/>
+                        <rect x="102" y="198" width="8" height="42" rx="2"/>
+                        <rect x="130" y="198" width="8" height="42" rx="2"/>
+                        <rect x="158" y="198" width="8" height="42" rx="2"/>
+                        <rect x="186" y="198" width="8" height="42" rx="2"/>
+                      </g>
+
+                      <rect class="chip-body" x="40" y="40" width="160" height="160" rx="14"/>
+                      <circle class="chip-pin-one" cx="58" cy="59" r="5"/>
+                      <path class="chip-mark" d="M80 153H160M80 164H142"/>
+                      <text class="chip-label" x="120" y="113" text-anchor="middle">MCU</text>
+                      <text class="chip-subtitle" x="120" y="136" text-anchor="middle">MONITOR</text>
+                    </svg>
+                  </div>
+
+                  <div class="loom-group loom-right" data-wire-group="right" aria-label="Fios conectados aos pinos direitos do monitor"></div>
+                  <div class="loom-group loom-bottom" data-wire-group="bottom" aria-label="Fios conectados aos pinos inferiores do monitor"></div>
+                </div>
+                <p class="wire-help"><span></span>Clique em qualquer fio para abrir seus dados elétricos.</p>
+              </div>
+
+              <aside class="wire-detail-panel" id="wireDetailPanel" role="region" aria-label="Dados elétricos do fio selecionado" aria-hidden="true" aria-live="polite">
+                <div class="wire-detail-head">
+                  <div>
+                    <small data-detail-channel>CANAL —</small>
+                    <h4 data-detail-name>Selecione um fio</h4>
+                  </div>
+                  <button type="button" id="wireDetailClose" aria-label="Fechar dados do fio">×</button>
+                </div>
+
+                <div class="wire-detail-live">
+                  <div>
+                    <small>TENSÃO ATUAL</small>
+                    <strong><span data-detail-voltage>--</span><em data-detail-voltage-unit> V</em></strong>
+                  </div>
+                  <span class="wire-detail-status" data-detail-status>AGUARDANDO</span>
+                </div>
+
+                <dl class="wire-detail-grid">
+                  <div><dt>Faixa ideal</dt><dd data-detail-ideal>—</dd></div>
+                  <div><dt>Tipo de sinal</dt><dd data-detail-type>—</dd></div>
+                  <div><dt>Origem</dt><dd data-detail-source>—</dd></div>
+                  <div><dt>Destino / pino</dt><dd data-detail-destination>—</dd></div>
+                  <div><dt>Impedância</dt><dd data-detail-impedance>—</dd></div>
+                  <div><dt>Última leitura</dt><dd data-detail-updated>—</dd></div>
+                </dl>
+
+                <div class="wire-detail-note">
+                  <small>FUNÇÃO DO CIRCUITO</small>
+                  <p data-detail-description>Os dados completos deste canal aparecerão aqui.</p>
+                </div>
+                <p class="wire-detail-hint">Selecione outro fio para trocar de canal sem fechar este painel.</p>
+              </aside>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="database">
+        <div class="section-heading inventory-heading">
+          <div><span class="section-index">09</span><h2>Estoque de componentes</h2></div>
+          <p>Cadastro local, busca rápida e levantamento instantâneo dos componentes disponíveis para o carro.</p>
+        </div>
+
+        <div class="inventory-dashboard">
+          <section class="inventory-kpis" aria-label="Resumo do estoque">
+            <article class="inventory-kpi">
+              <small>ITENS CADASTRADOS</small>
+              <strong id="inventorySkuCount">0</strong>
+              <span>modelos diferentes</span>
+            </article>
+            <article class="inventory-kpi accent">
+              <small>SALDO POR UNIDADE</small>
+              <strong id="inventoryUnitCount">0</strong>
+              <span id="inventoryUnitBreakdown">somatório em estoque</span>
+            </article>
+            <article class="inventory-kpi warning">
+              <small>REPOSIÇÃO NECESSÁRIA</small>
+              <strong id="inventoryLowCount">0</strong>
+              <span>itens no mínimo ou abaixo</span>
+            </article>
+            <article class="inventory-kpi value">
+              <small>VALOR ESTIMADO</small>
+              <strong id="inventoryValueTotal">R$ 0,00</strong>
+              <span>com base no custo informado</span>
+            </article>
+          </section>
+
+          <section class="sensor-card inventory-control-panel" aria-label="Ferramentas do estoque">
+            <div class="inventory-toolbar">
+              <label class="inventory-search" for="inventorySearch">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 20-4.7-4.7a8 8 0 1 0-1.4 1.4L20 21l1-1ZM5 10a6 6 0 1 1 12 0 6 6 0 0 1-12 0Z"/></svg>
+                <input id="inventorySearch" type="search" aria-label="Buscar componentes no estoque" placeholder="Buscar por nome, código, fabricante ou local" autocomplete="off">
+              </label>
+
+              <label class="inventory-select" for="inventoryCategoryFilter">
+                <span>TIPO</span>
+                <select id="inventoryCategoryFilter">
+                  <option value="all">Todos os tipos</option>
+                </select>
+              </label>
+
+              <label class="inventory-select" for="inventoryStockFilter">
+                <span>ESTOQUE</span>
+                <select id="inventoryStockFilter">
+                  <option value="all">Todos</option>
+                  <option value="available">Disponível</option>
+                  <option value="low">Baixo</option>
+                  <option value="out">Esgotado</option>
+                  <option value="unknown">Sem contagem</option>
+                </select>
+              </label>
+
+              <label class="inventory-select" for="inventorySort">
+                <span>ORDENAR</span>
+                <select id="inventorySort">
+                  <option value="updated">Alterados recentemente</option>
+                  <option value="name">Nome A–Z</option>
+                  <option value="quantity-desc">Maior quantidade</option>
+                  <option value="quantity-asc">Menor quantidade</option>
+                  <option value="category">Tipo de componente</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="inventory-actions">
+              <div role="group" aria-label="Importação, backup e relatórios do estoque">
+                <button class="inventory-button secondary" id="inventoryImportButton" type="button">Importar JSON</button>
+                <button class="inventory-button secondary" id="inventoryExportButton" type="button">Backup JSON</button>
+                <button class="inventory-button report" id="inventoryXlsxButton" type="button" aria-describedby="inventoryExportHelp">
+                  <span aria-hidden="true">XLSX</span> Relatório Excel
+                </button>
+                <button class="inventory-button secondary" id="inventoryCsvButton" type="button" aria-describedby="inventoryExportHelp">CSV simples</button>
+                <input id="inventoryImportInput" type="file" accept="application/json,.json" hidden>
+                <p id="inventoryExportHelp" class="sr-only">O CSV contém os dados em formato universal. O relatório Excel contém resumo, filtros, formatação e uma lista de reposição.</p>
+              </div>
+              <button class="inventory-button primary" id="inventoryAddButton" type="button">
+                <span aria-hidden="true">＋</span> Adicionar componente
+              </button>
+            </div>
+
+            <div class="inventory-result-bar">
+              <p id="inventoryResultText" aria-live="polite">Nenhum componente cadastrado</p>
+              <p><span id="inventoryCategoryCount">0</span> tipos cadastrados · <span id="inventoryStorageState">salvamento local ativo</span></p>
+            </div>
+          </section>
+
+          <section class="inventory-list" id="inventoryList" role="list" aria-label="Componentes em estoque"></section>
+
+          <section class="sensor-card inventory-empty-state" id="inventoryEmptyState">
+            <div class="inventory-empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><path d="M10 19 32 8l22 11v27L32 57 10 46V19Z"/><path d="m10 19 22 12 22-12M32 31v26M21 14l22 12"/></svg>
+            </div>
+            <small id="inventoryEmptyLabel">ESTOQUE AINDA VAZIO</small>
+            <h3 id="inventoryEmptyTitle">Cadastre o primeiro componente</h3>
+            <p id="inventoryEmptyDescription">Inclua quantidade, tipo, localização, custo, imagem e datasheet para encontrar qualquer peça rapidamente.</p>
+            <button class="inventory-button primary" id="inventoryEmptyAddButton" type="button">Adicionar primeiro componente</button>
+          </section>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div><span class="pulse-dot" id="footerStatusDot"></span><span id="footerConnectionText">Dados simulados atualizando a cada 500 ms</span></div>
+        <div><span>ENTRADAS</span> USB SERIAL / USB RF / MQTT <b>•</b> <span>PROTOCOLO</span> JSONL + MQTT/TLS + CRC + sequência</div>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="connection-modal" id="connectionModal" hidden>
+    <section class="connection-dialog" role="dialog" aria-modal="true" aria-labelledby="connectionDialogTitle" aria-describedby="connectionSourceNote">
+      <header class="connection-dialog-header">
+        <div>
+          <small>RECEPTOR DE TELEMETRIA</small>
+          <h2 id="connectionDialogTitle">Configurar entrada de dados</h2>
+        </div>
+        <button class="connection-close" id="connectionClose" type="button" aria-label="Fechar configuração">×</button>
+      </header>
+
+      <form id="connectionForm">
+        <label class="connection-field" for="dataSourceSelect">
+          <span>Fonte dos dados</span>
+          <select id="dataSourceSelect" name="source">
+            <option value="simulation">Simulação local</option>
+            <option value="usb_serial">USB serial direto</option>
+            <option value="usb_rf">Receptor USB por rádio frequência</option>
+            <option value="mqtt">MQTT em nuvem</option>
+            <option value="inverter">Inversor F28379D (USB)</option>
+            <option value="inverter_demo">Inversor F28379D (simulação)</option>
+          </select>
+        </label>
+
+        <label class="connection-field backend-url-field" for="backendUrl">
+          <span>Endereço do receptor local</span>
+          <input id="backendUrl" name="backendUrl" type="url" value="ws://127.0.0.1:8787/ws" spellcheck="false" autocomplete="off">
+        </label>
+
+        <label class="connection-field" id="inverterKeyField" for="inverterKey" hidden>
+          <span>Chave de sessão exibida no receptor do inversor</span>
+          <input id="inverterKey" type="password" pattern="[0-9a-f]{32}" autocomplete="off" spellcheck="false" disabled>
+        </label>
+
+        <div class="connection-source-note" id="connectionSourceNote">
+          A simulação funciona sem hardware e mantém os valores demonstrativos da interface.
+        </div>
+
+        <div class="mqtt-connection-summary" id="mqttConnectionSummary" hidden>
+          <div><small>FLUXO</small><strong>ESP32 gateway → broker MQTT → receptor local → painel</strong></div>
+          <div><small>TÓPICO PADRÃO</small><code>ufpr/formula-ev/v1/cars/+/telemetry</code></div>
+          <p>Broker, usuário, senha e certificados ficam somente no receptor local. Nenhuma credencial é gravada nesta página.</p>
+        </div>
+
+        <div class="connection-dialog-actions">
+          <button class="secondary-button" id="connectionCancel" type="button">Cancelar</button>
+          <button class="primary-button" type="submit">Aplicar e conectar</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="inventory-modal" id="inventoryModal" hidden>
+    <section class="inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventoryDialogTitle" aria-describedby="inventoryFormHint">
+      <header class="inventory-dialog-header">
+        <div>
+          <small>CONTROLE DE ESTOQUE</small>
+          <h2 id="inventoryDialogTitle">Adicionar componente</h2>
+          <p id="inventoryFormHint">Os campos marcados com * são obrigatórios.</p>
+        </div>
+        <button class="connection-close" id="inventoryClose" type="button" aria-label="Fechar cadastro">×</button>
+      </header>
+
+      <form id="inventoryForm" novalidate>
+        <input id="inventoryItemId" name="id" type="hidden">
+
+        <div class="inventory-form-layout">
+          <div class="inventory-form-fields">
+            <label class="inventory-field inventory-field-wide" for="inventoryName">
+              <span>Nome do componente *</span>
+              <input id="inventoryName" name="name" type="text" maxlength="80" required placeholder="Ex.: Conector Deutsch DT06-6S">
+            </label>
+
+            <label class="inventory-field" for="inventorySku">
+              <span>Código / part number</span>
+              <input id="inventorySku" name="sku" type="text" maxlength="40" placeholder="DT06-6S">
+            </label>
+
+            <label class="inventory-field" for="inventoryCategory">
+              <span>Tipo de componente *</span>
+              <input id="inventoryCategory" name="category" type="text" list="inventoryCategoryOptions" maxlength="50" required placeholder="Ex.: Sensor">
+              <datalist id="inventoryCategoryOptions">
+                <option value="Circuitos integrados"></option>
+                <option value="Semicondutores"></option>
+                <option value="Conversores e reguladores"></option>
+                <option value="Resistores e potenciômetros"></option>
+                <option value="Capacitores"></option>
+                <option value="Diodos e retificadores"></option>
+                <option value="Relés"></option>
+                <option value="Indutores e transformadores"></option>
+                <option value="Sensores"></option>
+                <option value="Módulos e placas"></option>
+                <option value="Conectores"></option>
+                <option value="Conectores HV"></option>
+                <option value="Terminais e crimps"></option>
+                <option value="Fusíveis e proteção"></option>
+                <option value="Botões e chaves"></option>
+                <option value="LEDs e displays"></option>
+                <option value="Motores e acionamento"></option>
+                <option value="Cabos e identificação"></option>
+                <option value="Componentes eletrônicos"></option>
+                <option value="Componentes mecânicos"></option>
+                <option value="Fixadores"></option>
+                <option value="Consumível"></option>
+                <option value="Ferramenta"></option>
+                <option value="Outro"></option>
+              </datalist>
+            </label>
+
+            <label class="inventory-field" for="inventoryQuantity">
+              <span>Quantidade atual</span>
+              <input id="inventoryQuantity" name="quantity" type="number" min="0" max="1000000000" step="0.01" placeholder="Vazio = sem contagem">
+            </label>
+
+            <label class="inventory-field" for="inventoryUnit">
+              <span>Unidade *</span>
+              <select id="inventoryUnit" name="unit" required>
+                <option value="un">unidade</option>
+                <option value="par">par</option>
+                <option value="kit">kit</option>
+                <option value="m">metro</option>
+                <option value="cm">centímetro</option>
+                <option value="rolo">rolo</option>
+                <option value="caixa">caixa</option>
+              </select>
+            </label>
+
+            <label class="inventory-field" for="inventoryMinimum">
+              <span>Estoque mínimo</span>
+              <input id="inventoryMinimum" name="minimum" type="number" min="0" max="1000000000" step="0.01" placeholder="Vazio = não informado">
+            </label>
+
+            <label class="inventory-low-stock-field inventory-field-wide" for="inventoryLowStockOverride">
+              <input id="inventoryLowStockOverride" name="lowStockOverride" type="checkbox">
+              <span>
+                <strong>Marcar manualmente como estoque baixo</strong>
+                <small>Use quando a origem indicar baixa sem informar um estoque mínimo. Desmarque após a reposição ou contagem.</small>
+              </span>
+            </label>
+
+            <label class="inventory-field" for="inventoryUnitCost">
+              <span>Custo unitário (R$)</span>
+              <input id="inventoryUnitCost" name="unitCost" type="number" min="0" max="1000000000" step="0.01" placeholder="0,00">
+            </label>
+
+            <label class="inventory-field" for="inventoryManufacturer">
+              <span>Fabricante</span>
+              <input id="inventoryManufacturer" name="manufacturer" type="text" maxlength="60" placeholder="Ex.: TE Connectivity">
+            </label>
+
+            <label class="inventory-field" for="inventoryLocation">
+              <span>Localização física</span>
+              <input id="inventoryLocation" name="location" type="text" maxlength="60" placeholder="Ex.: Armário A · Gaveta 03">
+            </label>
+
+            <label class="inventory-field inventory-field-wide" for="inventoryNotes">
+              <span>Observações</span>
+              <textarea id="inventoryNotes" name="notes" maxlength="500" rows="3" placeholder="Aplicação, fornecedor, compatibilidade ou qualquer detalhe útil"></textarea>
+            </label>
+          </div>
+
+          <aside class="inventory-asset-panel">
+            <section class="inventory-image-field">
+              <span>Imagem do componente</span>
+              <div class="inventory-image-preview" id="inventoryImagePreview" data-empty="true">
+                <img id="inventoryPreviewImage" alt="Pré-visualização do componente" hidden>
+                <svg id="inventoryPreviewPlaceholder" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 15h44v34H10z"/><circle cx="23" cy="27" r="5"/><path d="m14 44 12-11 8 7 7-8 9 12"/></svg>
+              </div>
+              <button class="inventory-file-button" id="inventoryChooseImage" type="button">Escolher imagem</button>
+              <input id="inventoryImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+              <button class="inventory-remove-image" id="inventoryRemoveImage" type="button" hidden>Remover imagem</button>
+              <small id="inventoryImageStatus">PNG, JPG ou WebP. A imagem será reduzida para economizar espaço.</small>
+            </section>
+
+            <section class="inventory-datasheet-field" aria-labelledby="inventoryDatasheetLabel">
+              <span id="inventoryDatasheetLabel">Datasheet do componente</span>
+              <div class="inventory-datasheet-summary" id="inventoryDatasheetSummary" data-empty="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h8l4 4v16H6V2Z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></svg>
+                <div>
+                  <strong id="inventoryDatasheetName">Sem PDF anexado</strong>
+                  <small id="inventoryDatasheetStatus" role="status" aria-live="polite">PDF de até 10 MB</small>
+                </div>
+              </div>
+              <div class="inventory-datasheet-actions">
+                <button class="inventory-file-button" id="inventoryChooseDatasheet" type="button">Anexar PDF</button>
+                <input id="inventoryDatasheetInput" type="file" accept="application/pdf,.pdf" hidden>
+                <button class="inventory-remove-image" id="inventoryRemoveDatasheet" type="button" hidden>Remover PDF</button>
+              </div>
+              <label class="inventory-datasheet-url" for="inventoryDatasheetUrl">
+                <span>OU LINK DO FABRICANTE</span>
+                <input id="inventoryDatasheetUrl" name="datasheetUrl" type="url" maxlength="500" inputmode="url" placeholder="https://fabricante.com/datasheet.pdf">
+              </label>
+            </section>
+          </aside>
+        </div>
+
+        <div class="inventory-dialog-actions">
+          <button class="inventory-button secondary" id="inventoryCancel" type="button">Cancelar</button>
+          <button class="inventory-button primary" id="inventorySave" type="submit">Salvar componente</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script type="application/json" id="telemetryProtocol">
+    {
+      "version": "0.4-prototype",
+      "frame": "JSONL em serial; JSON em MQTT",
+      "transports": [
+        {
+          "id": "usb-direct",
+          "type": "usb_serial",
+          "role": "car_mcu_to_pc",
+          "baudRate": 115200,
+          "required": ["vehicle_id", "source_id", "boot_id", "timestamp_ms", "sequence", "payload", "crc16"]
+        },
+        {
+          "id": "usb-rf-gateway",
+          "type": "usb_serial_rf_gateway",
+          "role": "rf_receiver_to_pc",
+          "baudRate": 115200,
+          "required": ["vehicle_id", "source_id", "boot_id", "timestamp_ms", "sequence", "payload", "crc16"],
+          "extraBackendFunctions": ["packet_reorder", "lost_frame_detection", "crc_validation", "radio_link_quality", "last_good_value_hold"]
+        },
+        {
+          "id": "mqtt-cloud",
+          "type": "mqtt_tls",
+          "role": "internet_gateway_to_cloud_to_pc",
+          "topic": "ufpr/formula-ev/v1/cars/{vehicle_id}/telemetry",
+          "qos": 1,
+          "retain": false,
+          "required": ["vehicle_id", "source_id", "boot_id", "timestamp_ms", "sequence", "payload", "crc16"],
+          "extraBackendFunctions": ["tls", "automatic_reconnect", "qos1_deduplication", "stale_data_detection", "jsonl_session_log"]
+        }
+      ],
+      "payloadGroups": ["ev", "suspension", "tires", "imu", "chassis_strain", "brakes", "bearing_vibration", "harness_voltage"]
+    }
+  </script>
+  <script src="vendor/exceljs.min.js?v=4.4.0"></script>
+  <script src="inverter-demo.js?v=20261111-3"></script>
+  <script src="inverter.js?v=20261111-3"></script>
+  <script src="app.js?v=20261111-4"></script>
+  <script src="inventory-seed.js?v=20260822-1"></script>
+  <script src="inventory.js?v=20260822-1"></script>
+</body>
+</html>

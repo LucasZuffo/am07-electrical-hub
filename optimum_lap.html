@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimum Lap - UFPR Fórmula</title>
+    
+    <!-- Chart.js para os gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* ---------- BARRA DE NAVEGAÇÃO SUPERIOR ---------- */
+        .topnav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #081332;
+            border-bottom: 1px solid #1c3a6e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .topnav::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -1px;
+            width: 120px;
+            height: 2px;
+            background: #f4c430;
+        }
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 14px;
+            min-height: 40px;
+            background: #0d1830;
+            border: 1px solid #1c3a6e;
+            border-radius: 4px;
+            color: #eef1f8;
+            font-size: .9em;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .nav-btn:hover { border-color: #f4c430; background: #10203f; }
+        .nav-btn svg { width: 16px; height: 16px; color: #f4c430; flex-shrink: 0; }
+        .crumbs { display: flex; align-items: center; gap: 8px; margin-left: 10px; font-size: .85em; color: #7c88a8; white-space: nowrap; }
+        .crumbs a { color: #7c88a8; text-decoration: none; }
+        .crumbs a:hover { color: #f4c430; }
+        .crumbs .here { color: #ffde59; font-weight: 600; }
+        .nav-team { margin-left: auto; font-weight: 700; letter-spacing: 2px; font-size: .85em; color: #f4c430; }
+
+        /* ---------- LAYOUT COM SIDEBAR ---------- */
+        .main-wrapper {
+            display: flex;
+            flex: 1;
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 25px 20px;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            position: sticky;
+            top: 85px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar.collapsed {
+            width: 80px;
+            padding: 20px 10px;
+        }
+        .sidebar-toggle {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: 0.2s;
+            align-self: center;
+        }
+        .sidebar-toggle:hover { background: #30363d; color: #58a6ff; }
+        .sidebar-toggle svg { width: 18px; height: 18px; transition: transform 0.3s; }
+        .sidebar.collapsed .sidebar-toggle svg { transform: rotate(180deg); }
+
+        .sidebar h3 {
+            font-size: 0.9em;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+            text-align: center;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed h3 {
+            display: none;
+        }
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            text-align: center;
+            padding: 12px 15px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: #c9d1d9;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        .sidebar.collapsed .tab-btn span {
+            display: none;
+        }
+        .tab-btn:hover { background: #21262d; }
+        .tab-btn.active {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: #1f6feb;
+            color: #58a6ff;
+        }
+        .tab-btn svg { width: 18px; height: 18px; opacity: 0.8; }
+        .tab-btn.active svg { color: #58a6ff; opacity: 1; }
+
+        .content-area {
+            flex: 1;
+            min-width: 0;
+        }
+        .tab-content { display: none; }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ---------- ESTILOS DOS COMPONENTES INTERNOS ---------- */
+        .header {
+            background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 20px rgba(31, 111, 235, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .header h1 { font-size: 2.2em; margin-bottom: 10px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); position: relative; z-index: 2; }
+        .header p { font-size: 1em; opacity: 0.9; position: relative; z-index: 2; }
+        .header-badge {
+            position: absolute; top: 30px; right: 30px; background: rgba(0, 0, 0, 0.2); padding: 8px 16px; 
+            border-radius: 20px; font-weight: 600; font-size: 0.9em; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px); z-index: 2;
+        }
+
+        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 25px; margin-bottom: 25px; }
+        .panel h2 { color: #c9d1d9; margin-bottom: 20px; font-size: 1.4em; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+
+        .upload-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+        .upload-card { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 250px; background: #0d1117; padding: 20px; border-radius: 6px; border: 1px solid #30363d; }
+        .upload-card label { color: #8b949e; font-weight: 600; font-size: 0.95em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .nom-card { border-top: 3px solid #58a6ff; }
+        .pic-card { border-top: 3px solid #ff7b72; }
+        .old-card { border-top: 3px solid #8b949e; }
+        
+        input[type="file"] { color: #c9d1d9; font-size: 0.9em; font-family: inherit; }
+        input[type="file"]::file-selector-button { background: #21262d; border: 1px solid #30363d; padding: 8px 16px; border-radius: 4px; color: #c9d1d9; cursor: pointer; margin-right: 15px; font-weight: 600; transition: 0.2s; }
+        input[type="file"]::file-selector-button:hover { background: #30363d; }
+        
+        textarea.accel-input { width: 100%; height: 120px; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-family: 'Courier New', monospace; font-size: 0.85em; resize: vertical; margin-top: 10px;}
+        textarea.accel-input:focus { outline: none; border-color: #58a6ff; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .stat-card { background: #0d1117; padding: 20px; border-radius: 6px; border: 1px solid #30363d; display: flex; flex-direction: column; gap: 10px; }
+        .stat-label { font-size: 0.85em; color: #8b949e; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; border-bottom: 1px dashed #30363d; padding-bottom: 8px; margin-bottom: 5px; }
+        
+        .val-row { display: flex; justify-content: space-between; align-items: center; font-family: 'Courier New', monospace; font-weight: 700; }
+        .val-row.nominal { color: #58a6ff; }
+        .val-row.pico { color: #ff7b72; }
+        .val-row.old { color: #8b949e; }
+        
+        .val-tag { font-family: 'Segoe UI', Arial, sans-serif; font-size: 0.7em; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; }
+        .val-row.nominal .val-tag { background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.3); }
+        .val-row.pico .val-tag { background: rgba(255, 123, 114, 0.1); border: 1px solid rgba(255, 123, 114, 0.3); }
+        .val-row.old .val-tag { background: rgba(139, 148, 158, 0.1); border: 1px solid rgba(139, 148, 158, 0.3); }
+        
+        .val-number { font-size: 1.3em; }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .chart-container { position: relative; height: 380px; width: 100%; background: #0d1117; border-radius: 6px; border: 1px solid #30363d; padding: 15px; }
+        .chart-container.full-width { height: 450px; }
+
+        @media (max-width: 1000px) {
+            .main-wrapper { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .lap-shortcuts { width: 100%; margin-top: 12px; padding-top: 10px; border-top: 1px solid #1c3a6e; }
+        .sidebar.collapsed .lap-shortcuts { display: none; }
+        .lap-shortcuts ul { list-style: none; padding: 0; margin: 0; }
+        .lap-shortcuts a { display: block; padding: 8px; color: #eef1f8; border-radius: 4px; text-decoration: none; }
+        .lap-shortcuts a:hover, .lap-shortcuts a:focus-visible { background: #10203f; color: #f4c430; }
+        .lap-shortcuts a:focus-visible { outline: 2px solid #f4c430; }
+        .lap-shortcuts .lap-return { color: #f4c430; }
+        .tab-content h2[id] { scroll-margin-top: 78px; }
+    </style>
+</head>
+<body>
+
+    <nav class="topnav" aria-label="Navegação">
+        <button class="nav-btn" type="button" onclick="window.location.href='menu_am07.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg>Voltar
+        </button>
+        <div class="crumbs">
+            <a href="#">AM-07</a><span>/</span><a href="#">Powertrain</a><span>/</span><span class="here">Optimum Lap</span>
+        </div>
+        <div class="nav-team">UFPR FÓRMULA</div>
+    </nav>
+
+    <div class="main-wrapper">
+        <!-- BARRA LATERAL -->
+        <div class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Recolher menu" aria-controls="lap-shortcuts" aria-expanded="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h3>Tipos de Evento</h3>
+            <button class="tab-btn active" onclick="switchTab('enduro')" id="btn-tab-enduro">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                <span>FSAE Enduro</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('accel')" id="btn-tab-accel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                <span>Acceleration</span>
+            </button>
+            <nav class="lap-shortcuts" id="lap-shortcuts" aria-label="Atalhos do Optimum Lap">
+                <a class="lap-return" href="index.html#ferramentas">← Central de Elétrica</a>
+                <ul data-lap-section="enduro">
+                    <li><a href="#enduro-dados">Importar CSV</a></li>
+                    <li><a href="#enduro-estatisticas">Estatísticas da volta</a></li>
+                    <li><a href="#enduro-velocidade">Velocidade</a></li>
+                    <li><a href="#enduro-gg">Diagrama GG</a></li>
+                </ul>
+                <ul data-lap-section="accel" hidden>
+                    <li><a href="#accel-dados">Dados da simulação</a></li>
+                    <li><a href="#accel-desempenho">Desempenho</a></li>
+                    <li><a href="#accel-perfil">Perfil longitudinal</a></li>
+                </ul>
+            </nav>
+            <!-- Facilidade para adicionar novas abas no futuro: -->
+            <!-- <button class="tab-btn" onclick="switchTab('skidpad')"><span>Skidpad</span></button> -->
+        </div>
+
+        <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+        <div class="content-area">
+            
+            <!-- ========================================== -->
+            <!-- ABA 1: ENDURO (Comparação Nominal vs Pico) -->
+            <!-- ========================================== -->
+            <div id="tab-enduro" class="tab-content active">
+                <div class="header">
+                    <div class="header-badge">Comparação de Mapas</div>
+                    <h1>Simulação Endurance</h1>
+                    <p>Análise paramétrica comparativa de desempenho através de arquivos CSV nativos do OpenLAP.</p>
+                </div>
+
+                <div class="panel">
+                    <h2 id="enduro-dados">Sobrescrever Dados com OpenLAP CSV</h2>
+                    <div class="upload-grid">
+                        <div class="upload-card nom-card">
+                            <label><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg> Mapeamento Nominal</label>
+                            <input type="file" id="csvNominal" accept=".csv">
+                        </div>
+                        <div class="upload-card pic-card">
+                            <label><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff7b72" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Mapeamento Pico</label>
+                            <input type="file" id="csvPico" accept=".csv">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2 id="enduro-estatisticas">Estatísticas da Volta</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Tempo de Volta</div>
+                            <div class="val-row nominal"><span class="val-tag">Nominal</span><span class="val-number" id="val-tempo-nom">--:--.---</span></div>
+                            <div class="val-row pico"><span class="val-tag">Pico</span><span class="val-number" id="val-tempo-pic">--:--.---</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Velocidade Máxima</div>
+                            <div class="val-row nominal"><span class="val-tag">Nominal</span><span class="val-number" id="val-velmax-nom">-- km/h</span></div>
+                            <div class="val-row pico"><span class="val-tag">Pico</span><span class="val-number" id="val-velmax-pic">-- km/h</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Consumo Estimado</div>
+                            <div class="val-row nominal"><span class="val-tag">Nominal</span><span class="val-number" id="val-consumo-nom">-- kWh</span></div>
+                            <div class="val-row pico"><span class="val-tag">Pico</span><span class="val-number" id="val-consumo-pic">-- kWh</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Acel. Lateral Máxima</div>
+                            <div class="val-row nominal"><span class="val-tag">Nominal</span><span class="val-number" id="val-glat-nom">-- G</span></div>
+                            <div class="val-row pico"><span class="val-tag">Pico</span><span class="val-number" id="val-glat-pic">-- G</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="panel" style="margin-bottom: 0;">
+                        <h2 id="enduro-velocidade">Velocidade vs Distância</h2>
+                        <div class="chart-container"><canvas id="chartVelocidade"></canvas></div>
+                    </div>
+                    <div class="panel" style="margin-bottom: 0;">
+                        <h2 id="enduro-gg">Diagrama GG (Friction Circle)</h2>
+                        <div class="chart-container"><canvas id="chartGG"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- ABA 2: ACCELERATION (Análise de Reta)      -->
+            <!-- ========================================== -->
+            <div id="tab-accel" class="tab-content">
+                <div class="header" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+                    <div class="header-badge">Linha Reta 75m</div>
+                    <h1>Simulação Acceleration</h1>
+                    <p>Dinâmica longitudinal, extração de tempos (0-100 km/h) e frenagem extraídos do relatório do OpenLAP.</p>
+                </div>
+
+                <div class="panel">
+                    <h2 id="accel-dados">Dados da Simulação (Cole o texto do OpenLAP)</h2>
+                    <div class="upload-grid">
+                        <div class="upload-card nom-card" style="border-color: #3fb950;">
+                            <label>AM-07 (Atual)</label>
+                            <textarea id="txtAccelAtual" class="accel-input" placeholder="Cole aqui as linhas geradas pelo OpenLAP (ex: Acceleration simulation started...)"></textarea>
+                        </div>
+                        <div class="upload-card old-card">
+                            <label>Carro Antigo (Opcional - Comparação)</label>
+                            <textarea id="txtAccelAntigo" class="accel-input" placeholder="Cole aqui para comparar as curvas de velocidade no gráfico"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2 id="accel-desempenho">Desempenho AM-07</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Tempo 0-50 km/h</div>
+                            <div class="val-row nominal"><span class="val-tag">AM-07</span><span class="val-number" id="accel-0-50-atual">-- s</span></div>
+                            <div class="val-row old"><span class="val-tag">Antigo</span><span class="val-number" id="accel-0-50-antigo">-- s</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Tempo 0-100 km/h</div>
+                            <div class="val-row nominal"><span class="val-tag">AM-07</span><span class="val-number" id="accel-0-100-atual">-- s</span></div>
+                            <div class="val-row old"><span class="val-tag">Antigo</span><span class="val-number" id="accel-0-100-antigo">-- s</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Distância de Frenagem</div>
+                            <div class="val-row nominal"><span class="val-tag">AM-07</span><span class="val-number" id="accel-brake-atual" style="color: #ff7b72;">-- m</span></div>
+                            <div class="val-row old"><span class="val-tag">Antigo</span><span class="val-number" id="accel-brake-antigo">-- m</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Velocidade Máxima (Reta)</div>
+                            <div class="val-row nominal"><span class="val-tag">AM-07</span><span class="val-number" id="accel-vmax-atual" style="color: #58a6ff;">-- km/h</span></div>
+                            <div class="val-row old"><span class="val-tag">Antigo</span><span class="val-number" id="accel-vmax-antigo">-- km/h</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2 id="accel-perfil">Perfil Longitudinal (Velocidade e Aceleração)</h2>
+                    <div class="chart-container full-width">
+                        <canvas id="chartAccel"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Carrega o arquivo externo com as variáveis CSV (Opcional) -->
+    <script src="dados_simulacao.js"></script>
+
+    <script>
+        // =====================================================================
+        // CONTROLE DE ABAS E SIDEBAR (UI)
+        // =====================================================================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const collapsed = sidebar.classList.toggle('collapsed');
+            const toggle = sidebar.querySelector('.sidebar-toggle');
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            toggle.setAttribute('aria-label', collapsed ? 'Expandir menu' : 'Recolher menu');
+            
+            // Timeout garante que o gráfico vai redimensionar *após* a animação do menu
+            setTimeout(() => {
+                if(chartVel) chartVel.resize();
+                if(chartGG) chartGG.resize();
+                if(chartAccel) chartAccel.resize();
+            }, 310);
+        }
+
+        function switchTab(tabId) {
+            // Esconde todas as abas
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Mostra a aba clicada
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('btn-tab-' + tabId).classList.add('active');
+            for (const group of document.querySelectorAll('[data-lap-section]')) {
+                group.hidden = group.dataset.lapSection !== tabId;
+            }
+            
+            // Força o redimensionamento dos gráficos para não bugarem com display:none
+            if(tabId === 'enduro') {
+                if(chartVel) chartVel.resize();
+                if(chartGG) chartGG.resize();
+            } else if(tabId === 'accel') {
+                if(chartAccel) chartAccel.resize();
+            }
+        }
+
+        // =====================================================================
+        // CONFIGURAÇÕES GERAIS E DADOS DEFAULT
+        // =====================================================================
+        Chart.defaults.color = '#8b949e';
+        Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+
+        const CONSUMO_NOMINAL = 4.62;
+        const CONSUMO_PICO = 6.71;
+
+        // Texto Default de Aceleração (fornecido por você) para iniciar a página já populada
+        const DEFAULT_ACCEL = `=======================================================================================
+Acceleration simulation started:
+Initial Speed: 0 km/h
+|_______Comment________|_Speed_|_Accel_|_EnRPM_|_Gear__|_Tabs__|_Xabs__|_Trel__|_Xrel_|
+|______________________|[km/h]_|__[G]__|_[rpm]_|__[#]__|__[s]__|__[m]__|__[s]__|_[m]__|
+Speed Trap #  1  50km/h   50.00	   0.52	   2424	      1	   2.79	  19.22	   2.79	  19.22
+Speed Trap #  2 100km/h  100.01	   0.60	   4849	      1	   5.33	  71.81	   5.33	  71.81
+Engine speed limited	 144.37	   0.42	   7000	      1	   7.55	 147.62	   7.55	 147.62
+Average acceleration:    0.542 [G]
+Peak acceleration   :    0.622 [G]
+Elapsed time is 0.165007 seconds.
+===============================================================================
+Deceleration simulation started:
+Initial Speed: 144.374 [km/h]
+|_______Comment________|_Speed_|_Accel_|_EnRPM_|_Gear__|_Tabs__|_Xabs__|_Trel__|_Xrel_|
+|______________________|[km/h]_|__[G]__|_[rpm]_|__[#]__|__[s]__|__[m]__|__[s]__|_[m]__|
+Speed Trap #  2 100km/h   99.97	  -1.01	   4849	      1	   8.79	 189.97	   1.25	  42.35
+Speed Trap #  1  50km/h   49.99	  -1.00	   2426	      1	  10.20	 219.33	   2.66	  71.71
+Stopped             	   0.00	  -1.00	      1	      1	  11.62	 229.14	   4.07	  81.52
+Average deceleration:    1.004 [G]
+Peak deceleration   :    1.009 [G]
+Elapsed time is 0.078347 seconds.
+===============================================================================`;
+
+        // =====================================================================
+        // PARSERS (LEITORES DE DADOS)
+        // =====================================================================
+        
+        function parseEnduroCSV(csvText, consumoManual) {
+            const lines = csvText.split(/\r?\n/);
+            let maxVel = 0, maxLat = 0, maxTime = 0;
+            const velData = [], ggData = [];
+
+            for(let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '' || !/^-?\d/.test(line)) continue; // Pula cabeçalhos automaticamente
+                
+                const cols = line.split(/[;,\t\s]+/).filter(c => c !== '');
+                if (cols.length >= 8) {
+                    const distVal = parseFloat(cols[0]);
+                    if(!isNaN(distVal)) {
+                        const timeVal = parseFloat(cols[1]);
+                        const vel_kmh = parseFloat(cols[4]) * 3.6;
+                        const long_g = parseFloat(cols[6]) / 9.81;
+                        const lat_g = parseFloat(cols[7]) / 9.81;
+
+                        if(!isNaN(vel_kmh) && !isNaN(lat_g)) {
+                            velData.push({ x: distVal, y: vel_kmh });
+                            ggData.push({ x: lat_g, y: long_g });
+                            if(vel_kmh > maxVel) maxVel = vel_kmh;
+                            if(Math.abs(lat_g) > maxLat) maxLat = Math.abs(lat_g);
+                            if(timeVal > maxTime) maxTime = timeVal;
+                        }
+                    }
+                }
+            }
+            return { velData, ggData, maxVel, maxLat, maxTime, consumo: consumoManual };
+        }
+
+        function parseAccelText(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            let data = { time: [], speed: [], accel: [], dist: [] };
+            
+            // Estatísticas a serem extraídas
+            let t0_50 = "--", t0_100 = "--", vMax = 0, distFrenagem = 0;
+            
+            let phase = null;
+
+            for (let line of lines) {
+                if (line.includes('Acceleration simulation started')) phase = 'accel';
+                if (line.includes('Deceleration simulation started')) phase = 'decel';
+                
+                // Extrai colunas numéricas de forma flexível ignorando a coluna "Comment" que tem tamanho variável
+                const parts = line.trim().split(/\s+/);
+                // O OpenLAP tem 8 colunas de dados no final: Speed, Accel, EnRPM, Gear, Tabs, Xabs, Trel, Xrel
+                if (parts.length >= 8) {
+                    let speed = parseFloat(parts[parts.length - 8]);
+                    let accel = parseFloat(parts[parts.length - 7]);
+                    let timeAbs = parseFloat(parts[parts.length - 4]); // Tabs
+                    let distAbs = parseFloat(parts[parts.length - 3]); // Xabs
+                    let distRel = parseFloat(parts[parts.length - 1]); // Xrel
+                    
+                    if (!isNaN(speed) && !isNaN(accel) && !isNaN(timeAbs)) {
+                        data.time.push(timeAbs);
+                        data.speed.push(speed);
+                        data.accel.push(accel);
+                        data.dist.push(distAbs);
+                        
+                        // Lógica de captura de métricas chave
+                        if (phase === 'accel') {
+                            if (speed >= 49.9 && t0_50 === "--") t0_50 = timeAbs.toFixed(2);
+                            if (speed >= 99.9 && t0_100 === "--") t0_100 = timeAbs.toFixed(2);
+                            if (speed > vMax) vMax = speed;
+                        } else if (phase === 'decel') {
+                            if (speed === 0 || line.includes("Stopped")) distFrenagem = distRel.toFixed(2);
+                        }
+                    }
+                }
+            }
+            return { series: data, stats: { t0_50, t0_100, vMax: vMax.toFixed(2), distFrenagem } };
+        }
+
+        // =====================================================================
+        // VARIÁVEIS GLOBAIS DE ESTADO E GRÁFICOS
+        // =====================================================================
+        let chartVel, chartGG, chartAccel;
+        let simDataEnduro = { nominal: null, pico: null };
+        let simDataAccel = { atual: null, antigo: null };
+
+        window.onload = function() {
+            initEnduroCharts();
+            initAccelChart();
+            
+            // Injeta o Acceleration Default no textarea e processa
+            document.getElementById('txtAccelAtual').value = DEFAULT_ACCEL;
+            processAccel();
+
+            // Tenta carregar variáveis do dados_simulacao.js (se existirem)
+            if (typeof CSV_NOMINAL !== 'undefined' && CSV_NOMINAL.trim().length > 100) {
+                simDataEnduro.nominal = parseEnduroCSV(CSV_NOMINAL, CONSUMO_NOMINAL);
+            }
+            if (typeof CSV_PICO !== 'undefined' && CSV_PICO.trim().length > 100) {
+                simDataEnduro.pico = parseEnduroCSV(CSV_PICO, CONSUMO_PICO);
+            }
+            updateEnduroUI();
+        };
+
+        // Listeners para os Textareas do Acceleration (Atualiza ao digitar/colar)
+        document.getElementById('txtAccelAtual').addEventListener('input', processAccel);
+        document.getElementById('txtAccelAntigo').addEventListener('input', processAccel);
+
+        function processAccel() {
+            const textAtual = document.getElementById('txtAccelAtual').value;
+            const textAntigo = document.getElementById('txtAccelAntigo').value;
+            
+            if (textAtual.trim().length > 50) simDataAccel.atual = parseAccelText(textAtual);
+            if (textAntigo.trim().length > 50) simDataAccel.antigo = parseAccelText(textAntigo);
+            else simDataAccel.antigo = null;
+            
+            updateAccelUI();
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = (seconds % 60).toFixed(3).padStart(6, '0');
+            return `${mins}:${secs}`;
+        }
+
+        // =====================================================================
+        // CRIAÇÃO DOS GRÁFICOS (CHART.JS)
+        // =====================================================================
+        function initEnduroCharts() {
+            const ctxVel = document.getElementById('chartVelocidade').getContext('2d');
+            chartVel = new Chart(ctxVel, {
+                type: 'line', // Alterado para 'line' garante o traçado contínuo entre os pontos
+                data: { datasets: [
+                    { label: 'Modo Nominal', data: [], borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.1)', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.1 },
+                    { label: 'Modo Pico', data: [], borderColor: '#ff7b72', backgroundColor: 'rgba(255, 123, 114, 0.1)', borderWidth: 2, borderDash: [5,5], fill: true, pointRadius: 0, tension: 0.1 }
+                ]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Distância percorrida (m)' } },
+                        y: { title: { display: true, text: 'Velocidade (km/h)' }, beginAtZero: true }
+                    }
+                }
+            });
+
+            const ctxGG = document.getElementById('chartGG').getContext('2d');
+            chartGG = new Chart(ctxGG, {
+                type: 'scatter',
+                data: { datasets: [
+                    { label: 'Nominal', data: [], backgroundColor: 'rgba(88, 166, 255, 0.5)', pointRadius: 2 },
+                    { label: 'Pico', data: [], backgroundColor: 'rgba(255, 123, 114, 0.5)', pointRadius: 2 }
+                ]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Aceleração Lateral (G)' }, min: -2.5, max: 2.5, grid: { color: '#30363d', zeroLineColor: '#8b949e' } },
+                        y: { title: { display: true, text: 'Aceleração Longitudinal (G)' }, min: -2.5, max: 2.5, grid: { color: '#30363d', zeroLineColor: '#8b949e' } }
+                    }
+                }
+            });
+        }
+
+        function initAccelChart() {
+            const ctxAccel = document.getElementById('chartAccel').getContext('2d');
+            chartAccel = new Chart(ctxAccel, {
+                type: 'line',
+                data: { labels: [], datasets: [] }, // Populado dinamicamente
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { title: { display: true, text: 'Tempo (s)' }, grid: { color: '#30363d' } },
+                        y: { 
+                            type: 'linear', display: true, position: 'left',
+                            title: { display: true, text: 'Velocidade (km/h)', color: '#3fb950' },
+                            grid: { color: '#30363d' }
+                        },
+                        y1: {
+                            type: 'linear', display: true, position: 'right',
+                            title: { display: true, text: 'Aceleração (G)', color: '#58a6ff' },
+                            grid: { drawOnChartArea: false } // Evita sobrepor as linhas de grade de Y
+                        }
+                    }
+                }
+            });
+        }
+
+        // =====================================================================
+        // ATUALIZAÇÃO DA INTERFACE COM OS DADOS PROCESSADOS
+        // =====================================================================
+        
+        function updateEnduroUI() {
+            if (simDataEnduro.nominal) {
+                document.getElementById('val-tempo-nom').textContent = formatTime(simDataEnduro.nominal.maxTime);
+                document.getElementById('val-velmax-nom').textContent = simDataEnduro.nominal.maxVel.toFixed(1) + " km/h";
+                document.getElementById('val-consumo-nom').textContent = simDataEnduro.nominal.consumo + " kWh";
+                document.getElementById('val-glat-nom').textContent = simDataEnduro.nominal.maxLat.toFixed(2) + " G";
+                chartVel.data.datasets[0].data = simDataEnduro.nominal.velData;
+                chartGG.data.datasets[0].data = simDataEnduro.nominal.ggData;
+            }
+            if (simDataEnduro.pico) {
+                document.getElementById('val-tempo-pic').textContent = formatTime(simDataEnduro.pico.maxTime);
+                document.getElementById('val-velmax-pic').textContent = simDataEnduro.pico.maxVel.toFixed(1) + " km/h";
+                document.getElementById('val-consumo-pic').textContent = simDataEnduro.pico.consumo + " kWh";
+                document.getElementById('val-glat-pic').textContent = simDataEnduro.pico.maxLat.toFixed(2) + " G";
+                chartVel.data.datasets[1].data = simDataEnduro.pico.velData;
+                chartGG.data.datasets[1].data = simDataEnduro.pico.ggData;
+            }
+            chartVel.update();
+            chartGG.update();
+        }
+
+        function updateAccelUI() {
+            if (!simDataAccel.atual) return;
+            
+            const stats = simDataAccel.atual.stats;
+            document.getElementById('accel-0-50-atual').textContent = stats.t0_50 + " s";
+            document.getElementById('accel-0-100-atual').textContent = stats.t0_100 + " s";
+            document.getElementById('accel-vmax-atual').textContent = stats.vMax + " km/h";
+            document.getElementById('accel-brake-atual').textContent = stats.distFrenagem + " m";
+
+            if (simDataAccel.antigo) {
+                const statsOld = simDataAccel.antigo.stats;
+                document.getElementById('accel-0-50-antigo').textContent = statsOld.t0_50 + " s";
+                document.getElementById('accel-0-100-antigo').textContent = statsOld.t0_100 + " s";
+                document.getElementById('accel-vmax-antigo').textContent = statsOld.vMax + " km/h";
+                document.getElementById('accel-brake-antigo').textContent = statsOld.distFrenagem + " m";
+            } else {
+                document.getElementById('accel-0-50-antigo').textContent = "-- s";
+                document.getElementById('accel-0-100-antigo').textContent = "-- s";
+                document.getElementById('accel-vmax-antigo').textContent = "-- km/h";
+                document.getElementById('accel-brake-antigo').textContent = "-- m";
+            }
+
+            // Remonta os datasets para o gráfico
+            const datasets = [];
+            
+            // 1. Velocidade AM-07
+            datasets.push({
+                label: 'Velocidade AM-07',
+                data: simDataAccel.atual.series.speed,
+                borderColor: '#3fb950', backgroundColor: 'rgba(63, 185, 80, 0.1)',
+                borderWidth: 2, pointRadius: 0, fill: true, tension: 0.1,
+                yAxisID: 'y'
+            });
+
+            // 2. Aceleração AM-07
+            datasets.push({
+                label: 'Aceleração AM-07 (G)',
+                data: simDataAccel.atual.series.accel,
+                borderColor: '#58a6ff', borderWidth: 2, pointRadius: 0, tension: 0.1,
+                yAxisID: 'y1'
+            });
+
+            // Opcional: Dados do Carro Antigo
+            if(simDataAccel.antigo) {
+                datasets.push({
+                    label: 'Velocidade Antigo',
+                    data: simDataAccel.antigo.series.speed,
+                    borderColor: '#8b949e', borderWidth: 2, borderDash: [5,5], pointRadius: 0, tension: 0.1,
+                    yAxisID: 'y'
+                });
+            }
+
+            chartAccel.data.labels = simDataAccel.atual.series.time; // Usa o tempo do atual como eixo X base
+            chartAccel.data.datasets = datasets;
+            chartAccel.update();
+        }
+
+        // Listeners Upload Enduro (Fallback caso queiram sobrescrever por botão)
+        document.getElementById('csvNominal').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (evt) => { simDataEnduro.nominal = parseEnduroCSV(evt.target.result, CONSUMO_NOMINAL); updateEnduroUI(); };
+            if(e.target.files[0]) reader.readAsText(e.target.files[0]);
+        });
+        document.getElementById('csvPico').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (evt) => { simDataEnduro.pico = parseEnduroCSV(evt.target.result, CONSUMO_PICO); updateEnduroUI(); };
+            if(e.target.files[0]) reader.readAsText(e.target.files[0]);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curva de torque · Design &amp; Cost · AM-07</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Segoe UI', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(31, 111, 235, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 0.95em;
+            opacity: 0.95;
+            margin-bottom: 5px;
+        }
+
+        .grid-main {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            color: #58a6ff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #30363d;
+        }
+
+        .tab-btn {
+            padding: 10px 15px;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            font-size: 0.9em;
+        }
+
+        .tab-btn.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+
+        .tab-btn:hover {
+            color: #c9d1d9;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-title {
+            color: #79c0ff;
+            font-size: 0.95em;
+            font-weight: 700;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #c9d1d9;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        label small {
+            color: #8b949e;
+            font-size: 0.85em;
+            display: block;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            color: #c9d1d9;
+            font-size: 0.9em;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: 1px solid #30363d;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn-primary {
+            background: #238636;
+            color: white;
+            border-color: #2ea043;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+            border-color: #3fb950;
+            box-shadow: 0 0 10px rgba(46, 160, 67, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #1f6feb;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            color: #c9d1d9;
+            border-color: #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .btn-export {
+            background: #1f6feb;
+            color: white;
+            border-color: #388bfd;
+        }
+
+        .btn-export:hover {
+            background: #388bfd;
+            border-color: #58a6ff;
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.4);
+        }
+
+        .status-message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-weight: 600;
+            display: none;
+            font-size: 0.9em;
+            border-left: 4px solid;
+        }
+
+        .status-success {
+            background: #0d3922;
+            color: #3fb950;
+            border-color: #3fb950;
+            display: block;
+        }
+
+        .status-error {
+            background: #3d1f1a;
+            color: #f85149;
+            border-color: #f85149;
+            display: block;
+        }
+
+        .status-info {
+            background: #0d3a66;
+            color: #79c0ff;
+            border-color: #58a6ff;
+            display: block;
+        }
+
+        .info-box {
+            background: #0d3a66;
+            border-left: 3px solid #58a6ff;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #79c0ff;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 3px solid #58a6ff;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            color: #58a6ff;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        thead {
+            background: #0d1117;
+            border-bottom: 2px solid #30363d;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #58a6ff;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #21262d;
+            font-family: 'Courier New', monospace;
+            color: #c9d1d9;
+        }
+
+        tbody tr:hover {
+            background: #0d1117;
+        }
+
+        .numeric {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #58a6ff;
+            border-radius: 50%;
+            animation: spin 1.5s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .result-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 1200px) {
+            .grid-main {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.6em;
+            }
+        }
+
+        /* ---------- BARRA DE NAVEGAÇÃO ---------- */
+        .topnav{position:sticky;top:0;z-index:100;margin:-20px -20px 20px;padding:10px 20px;display:flex;align-items:center;gap:10px;background:#081332;border-bottom:1px solid #1c3a6e;font-family:'Segoe UI',Arial,sans-serif}
+        .topnav::after{content:"";position:absolute;left:0;bottom:-1px;width:120px;height:2px;background:#f4c430}
+        .nav-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;min-height:40px;background:#0d1830;border:1px solid #1c3a6e;border-radius:4px;color:#eef1f8;font-size:.9em;font-weight:600;font-family:inherit;text-decoration:none;cursor:pointer;transition:border-color .18s,background .18s}
+        .nav-btn:hover{border-color:#f4c430;background:#10203f}
+        .nav-btn:focus-visible{outline:2px solid #ffde59;outline-offset:2px}
+        .nav-btn svg{width:16px;height:16px;color:#f4c430;flex-shrink:0}
+        .crumbs{display:flex;align-items:center;gap:8px;margin-left:10px;font-size:.85em;color:#7c88a8;white-space:nowrap;overflow:hidden}
+        .crumbs a{color:#7c88a8;text-decoration:none}
+        .crumbs a:hover{color:#f4c430}
+        .crumbs .here{color:#ffde59;font-weight:600}
+        .nav-team{margin-left:auto;font-weight:700;letter-spacing:2px;font-size:.85em;color:#f4c430}
+        @media (max-width:700px){.crumbs,.nav-team{display:none}}
+
+        .header {
+            background: #0d1830;
+            color: #eef1f8;
+            border: 1px solid #1c3a6e;
+            border-left: 4px solid #f4c430;
+            box-shadow: none;
+        }
+        .header h1 { font-family: "Segoe UI", system-ui, sans-serif; text-shadow: none; }
+        .profiles { display: flex; flex-wrap: wrap; gap: 8px 16px; border: 0; margin-top: 18px; }
+        .profiles legend { margin-bottom: 8px; color: #f4c430; }
+        .profiles label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+        .profiles input { accent-color: #f4c430; }
+        .profiles span { color: #aebbd6; }
+        .grid-main { grid-template-columns: 215px minmax(0, 1fr); align-items: start; }
+        .contents {
+            position: sticky;
+            top: 64px;
+            max-height: calc(100vh - 80px);
+            overflow: auto;
+            padding: 14px;
+            border: 1px solid #1c3a6e;
+            border-radius: 8px;
+            background: #0d1830;
+        }
+        .contents h2 { color: #f4c430; font-size: 1rem; margin-bottom: 8px; }
+        .contents ul { list-style: none; }
+        .contents a { display: block; padding: 6px 4px; color: #eef1f8; font-size: .875rem; text-decoration: none; }
+        .contents a:hover { color: #f4c430; }
+        .contents a:focus-visible { outline: 2px solid #f4c430; outline-offset: -2px; }
+        .result-panel[id] { scroll-margin-top: 68px; }
+        @media (max-width: 800px) {
+            .grid-main { grid-template-columns: minmax(0, 1fr); }
+            .contents { position: static; max-height: none; }
+            .contents ul { display: flex; flex-wrap: wrap; gap: 0 12px; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 1.65em; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="topnav" aria-label="Navegação">
+        <button class="nav-btn" type="button" onclick="voltarPagina()" aria-label="Voltar à página anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg>Voltar
+        </button>
+        <a class="nav-btn" href="menu_am07.html" aria-label="Ir ao menu principal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 L12 4 L20 11"/><path d="M6 10 V20 H18 V10"/></svg>Menu
+        </a>
+        <div class="crumbs">
+            <a href="menu_am07.html">AM-07</a><span>›</span><a href="menu_am07.html">Powertrain</a><span>›</span><span class="here">Curva de Torque</span>
+        </div>
+        <div class="nav-team">UFPR FÓRMULA</div>
+    </nav>
+    <div class="container">
+        <div class="header">
+            <h1>Curva de torque · EMRAX 208 HV LC</h1>
+            <p>AM-07 · Potência elétrica máxima de 80 kW</p>
+            <fieldset class="profiles">
+                <legend>Perfil de operação</legend>
+                <label><input type="radio" name="perfil" value="pico" checked> Pico <span>190 A RMS</span></label>
+                <label><input type="radio" name="perfil" value="nominal"> Nominal <span>150 A RMS</span></label>
+            </fieldset>
+        </div>
+
+        <div class="grid-main">
+            <nav class="contents" aria-labelledby="contents-title">
+                <h2 id="contents-title">Sumário</h2>
+                <ul>
+                    <li><a href="#torque">Curva de torque</a></li>
+                    <li><a href="#estatisticas">Estatísticas</a></li>
+                    <li><a href="#eficiencia">Mapa de eficiência</a></li>
+                    <li><a href="#degradacao">Queda de tensão</a></li>
+                    <li><a href="#correntes">Correntes Id e Iq</a></li>
+                    <li><a href="#corrente-total">Corrente total</a></li>
+                    <li><a href="#potencia">Potência mecânica</a></li>
+                    <li><a href="#equacoes">Equações de cálculo</a></li>
+                    <li><a href="#tabela">Tabela da LUT</a></li>
+                </ul>
+            </nav>
+            <div hidden>
+                <div id="statusMessage" class="status-message"></div>
+                <input type="hidden" id="p" value="10">
+                <input type="hidden" id="lambda" value="0.03867">
+                <input type="hidden" id="ld" value="110">
+                <input type="hidden" id="lq" value="115">
+                <input type="hidden" id="vdc" value="403.2">
+                <input type="hidden" id="vdc_deg_min" value="280">
+                <input type="hidden" id="vdc_deg_max" value="403.2">
+                <input type="hidden" id="vdc_deg_step" value="10">
+                <input type="hidden" id="tmax" value="150">
+                <input type="hidden" id="rpm_min" value="100">
+                <input type="hidden" id="rpm_max" value="7000">
+                <input type="hidden" id="rpm_step" value="50">
+                <input type="hidden" id="zona_transicao" value="3000">
+                <input type="hidden" id="zona_enfraquecimento" value="5000">
+            </div>
+
+            <!-- PAINEL DE RESULTADOS -->
+            <div>
+                <!-- Gráfico 2: Torque -->
+                <div class="result-panel" id="torque">
+                    <h2 style="color: #58a6ff;">Curva de Torque Otimizada</h2>
+                    <div class="chart-container">
+                        <canvas id="chartTorque"></canvas>
+                    </div>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="result-panel" id="estatisticas">
+                    <h2 style="color: #58a6ff;">Estatísticas da LUT Otimizada</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Pontos na LUT</div>
+                            <div class="stat-value" id="stat-pontos">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Torque Máximo</div>
+                            <div class="stat-value" id="stat-torque-max">0 Nm</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Corrente Máxima</div>
+                            <div class="stat-value" id="stat-imax">0 A</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Potência Máxima</div>
+                            <div class="stat-value" id="stat-pmax">0 kW</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Eficiência no Ponto de P. Máxima</div>
+                            <div class="stat-value" id="stat-eff-pmax">0 %</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Eficiência Média na Curva</div>
+                            <div class="stat-value" id="stat-eff-media">0 %</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 0: Mapa de Eficiência -->
+                <div class="result-panel" id="eficiencia">
+                    <h2 style="color: #58a6ff;">Mapa de Eficiência EMRAX 208 (com curva otimizada sobreposta)</h2>
+                    <div class="chart-container" style="height: 420px;">
+                        <canvas id="chartEficiencia"></canvas>
+                    </div>
+                    <div class="info-box">
+                        <strong>Sobre este mapa:</strong> os contornos de eficiência (86–90%, 90–94%, 94%, 95%, 96%) foram digitalizados a partir do mapa de eficiência do datasheet EMRAX 208 e aproximados por um modelo analítico contínuo η(rpm, torque). Essa eficiência não é só exibida: ela agora <strong>limita a própria curva de torque</strong> — a restrição de potência do otimizador usa a potência elétrica real (P_mec/η), então o torque cai um pouco mais nas regiões de menor eficiência (extremos do mapa) do que se a conversão fosse ideal. A linha tracejada branca mostra onde a curva otimizada (SLSQP) opera dentro desse mapa.
+                    </div>
+                </div>
+
+                <!-- Gráfico 1: Degradação por Tensão -->
+                <div class="result-panel" id="degradacao">
+                    <h2 style="color: #58a6ff;">Degradação de Torque por Queda de Tensão</h2>
+                    <div class="chart-container">
+                        <canvas id="chartDegradacao"></canvas>
+                    </div>
+                </div>
+
+
+
+                <!-- Gráfico 3: Correntes FOC -->
+                <div class="result-panel" id="correntes">
+                    <h2 style="color: #58a6ff;">Correntes FOC (Id, Iq)</h2>
+                    <div class="chart-container">
+                        <canvas id="chartCorrentes"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 4: Corrente Total -->
+                <div class="result-panel" id="corrente-total">
+                    <h2 style="color: #58a6ff;">Corrente Total vs RPM</h2>
+                    <div class="chart-container">
+                        <canvas id="chartITotal"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 5: Potência -->
+                <div class="result-panel" id="potencia">
+                    <h2 style="color: #58a6ff;">Potência Mecânica</h2>
+                    <div class="chart-container">
+                        <canvas id="chartPower"></canvas>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO DOCUMENTAÇÃO EQUAÇÕES Id e Iq -->
+                <div class="result-panel" id="equacoes" style="grid-column: 1 / -1;">
+                    <h2 style="color: #58a6ff;">Equações de Cálculo - Correntes Id e Iq</h2>
+                    
+                    <div class="section-title">Torque Eletromagnético</div>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #58a6ff;">
+                        <strong>Te = (3/2) × p × (λ<sub>m</sub> × Iq + (Ld - Lq) × Id × Iq)</strong>
+                        <br><small style="color: #8b949e;">Torque = (3 polos / 2) × (fluxo magnético × corrente Iq + efeito de relutância)</small>
+                    </div>
+
+                    <div class="section-title">Restrição de Corrente Total</div>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #58a6ff;">
+                        <strong>I<sub>total</sub> = √(Id² + Iq²) ≤ I<sub>max</sub></strong>
+                        <br><small style="color: #8b949e;">Magnitude da corrente (vetor dq) limitada pelo máximo permitido</small>
+                    </div>
+
+                    <div class="section-title">Restrição de Tensão (Impedância Síncrona)</div>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #58a6ff;">
+                        <strong>V<sub>d</sub> = -ω × Lq × Iq,  V<sub>q</sub> = ω × Ld × Id + ω × λ<sub>m</sub></strong>
+                        <br><strong>√(V<sub>d</sub>² + V<sub>q</sub>²) ≤ V<sub>DC</sub></strong>
+                        <br><small style="color: #8b949e;">Tensão no inversor limitada pela bateria disponível</small>
+                    </div>
+
+                    <div class="section-title">Processo de Otimização (SLSQP)</div>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #3fb950;">
+                        <strong>Objetivo:</strong> Maximizar Te para cada RPM<br>
+                        <strong>Sujeito a:</strong><br>
+                        &nbsp;&nbsp;• I<sub>total</sub> ≤ I<sub>max</sub> (<span id="limite-corrente">190</span> A RMS)<br>
+                        &nbsp;&nbsp;• √(V<sub>d</sub>² + V<sub>q</sub>²) ≤ V<sub>DC</sub> (403.2 V)<br>
+                        &nbsp;&nbsp;• Te ≤ T<sub>max</sub> (150 Nm)<br>
+                        &nbsp;&nbsp;• P ≤ P<sub>max</sub> (80 kW elétricos)<br>
+                        <strong>Variáveis:</strong> Id, Iq (ajustadas por RPM)
+                    </div>
+
+                    <div class="section-title">Cálculo da Eficiência</div>
+                    <div style="background: #0d1117; padding: 12px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #58a6ff;">
+                        <strong>η = (Te × ω<sub>m</sub>) / P<sub>elétrica</sub></strong>
+                        <br><strong>Perdas = R × I² (Joule) + Perdas Ferro + Mecânicas</strong>
+                        <br><small style="color: #8b949e;">A otimização busca maximizar torque respeitando as perdas e limites</small>
+                    </div>
+                </div>
+
+                <!-- Tabela -->
+                <div class="result-panel" id="tabela">
+                    <h2 style="color: #58a6ff;">Tabela Completa da LUT</h2>
+                    <div class="table-wrapper">
+                        <table id="resultTable">
+                            <thead>
+                                <tr>
+                                    <th>RPM</th>
+                                    <th>Id (A)</th>
+                                    <th>Iq (A)</th>
+                                    <th>I_total (A)</th>
+                                    <th>Torque (Nm)</th>
+                                    <th>P. Mecânica (kW)</th>
+                                    <th>Eficiência (%)</th>
+                                    <th>P. Elétrica (kW)</th>
+                                    <th>Zona</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; color: #8b949e; padding: 30px;">
+                                        Calculando os pontos da curva…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // VARIÁVEIS GLOBAIS
+        // =====================================================================
+        let chartDegradacao = null;
+        let chartTorque = null;
+        let chartCorrentes = null;
+        let chartITotal = null;
+        let chartPower = null;
+        let chartEficiencia = null;
+
+        const colors = {
+            torque: '#3fb950',
+            id: '#f85149',
+            iq: '#d29922',
+            iTotal: '#58a6ff',
+            power: '#bc8ef8',
+            grid: '#30363d',
+            text: '#c9d1d9'
+        };
+
+        // =====================================================================
+        // MODELO DE EFICIÊNCIA (aproximado a partir do mapa do datasheet EMRAX 208)
+        // =====================================================================
+        // Os contornos de eficiência do mapa do fabricante (eixos Torque x RPM)
+        // foram digitalizados manualmente e aproximados por 5 "níveis" aninhados
+        // (t = 1..5), cada um com semi-eixos próprios em cada quadrante (esquerda/
+        // direita em rpm, cima/baixo em torque). Entre os níveis a eficiência é
+        // interpolada linearmente, gerando uma superfície contínua η(rpm, torque)
+        // usada para estimar potência elétrica e perdas ao longo da LUT.
+        const EFF_CENTER_RPM = 2600;
+        const EFF_CENTER_T = 68;
+        // Semi-eixos: índice 0 = centro, 1 = contorno 96%, 2 = 95%, 3 = 94%, 4 = 90-94%, 5 = 86-90%
+        const EFF_AXIS_RPM_LEFT  = [0, 1300, 1700, 2100, 2500, 2600];
+        const EFF_AXIS_RPM_RIGHT = [0, 1600, 2100, 2600, 3400, 3500];
+        const EFF_AXIS_T_UP      = [0, 20, 32, 52, 72, 87];
+        const EFF_AXIS_T_DOWN    = [0, 18, 30, 40, 53, 58];
+        const EFF_LEVELS = [97, 96, 95, 94, 92, 88]; // eficiência (%) em cada nível t=0..5
+
+        function eff_axisAt(t, arr) {
+            if (t <= 0) return arr[0];
+            if (t >= 5) return arr[5] + (arr[5] - arr[4]) * (t - 5);
+            const k = Math.floor(t);
+            const frac = t - k;
+            return arr[k] + (arr[k + 1] - arr[k]) * frac;
+        }
+
+        function eff_radiusAtT(t, dx, dy) {
+            const ax = dx < 0 ? eff_axisAt(t, EFF_AXIS_RPM_LEFT) : eff_axisAt(t, EFF_AXIS_RPM_RIGHT);
+            const by = dy < 0 ? eff_axisAt(t, EFF_AXIS_T_DOWN) : eff_axisAt(t, EFF_AXIS_T_UP);
+            if (ax === 0 || by === 0) return Infinity;
+            return Math.sqrt((dx / ax) ** 2 + (dy / by) ** 2);
+        }
+
+        function eff_findT(dx, dy) {
+            if (dx === 0 && dy === 0) return 0;
+            let lo = 0, hi = 5;
+            let rHi = eff_radiusAtT(hi, dx, dy);
+            let guard = 0;
+            while (rHi > 1 && guard < 30) { hi *= 1.7; rHi = eff_radiusAtT(hi, dx, dy); guard++; }
+            for (let i = 0; i < 60; i++) {
+                const mid = (lo + hi) / 2;
+                if (eff_radiusAtT(mid, dx, dy) > 1) lo = mid; else hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+
+        function eff_etaFromT(t) {
+            if (t <= 0) return EFF_LEVELS[0];
+            if (t >= 5) {
+                const slope = EFF_LEVELS[5] - EFF_LEVELS[4];
+                return Math.max(50, EFF_LEVELS[5] + slope * (t - 5));
+            }
+            const k = Math.floor(t);
+            const frac = t - k;
+            return EFF_LEVELS[k] + (EFF_LEVELS[k + 1] - EFF_LEVELS[k]) * frac;
+        }
+
+        /** Eficiência estimada (fração 0-1) no ponto (rpm, torque) */
+        function getEficiencia(rpm, torque) {
+            const dx = rpm - EFF_CENTER_RPM;
+            const dy = torque - EFF_CENTER_T;
+            const t = eff_findT(dx, dy);
+            return eff_etaFromT(t) / 100;
+        }
+
+        /** Pontos de um contorno fechado (nível t) para plotagem do mapa */
+        function eff_contourPoints(t, nPts = 72) {
+            const pts = [];
+            for (let i = 0; i <= nPts; i++) {
+                const theta = (i / nPts) * 2 * Math.PI;
+                const cosT = Math.cos(theta), sinT = Math.sin(theta);
+                const ax = cosT < 0 ? eff_axisAt(t, EFF_AXIS_RPM_LEFT) : eff_axisAt(t, EFF_AXIS_RPM_RIGHT);
+                const by = sinT < 0 ? eff_axisAt(t, EFF_AXIS_T_DOWN) : eff_axisAt(t, EFF_AXIS_T_UP);
+                pts.push({ x: EFF_CENTER_RPM + ax * cosT, y: Math.max(0, EFF_CENTER_T + by * sinT) });
+            }
+            return pts;
+        }
+
+        // =====================================================================
+        // OTIMIZADOR FOC COM SLSQP
+        // =====================================================================
+
+        /**
+         * Equação de Torque FOC
+         * Te = 15 * (λ*Iq + (Ld - Lq)*Id*Iq)
+         */
+        function torqueEquation(Id, Iq, lambda, Ld, Lq) {
+            const diffL = Ld - Lq;
+            return 15.0 * (lambda * Iq + diffL * Id * Iq);
+        }
+
+        /**
+         * Restrição de Elipse de Tensão
+         * Retorna: Vs_max² - (Vd² + Vq²)
+         */
+        function constraintVoltageEllipse(Id, Iq, omegaE, Vmax, lambda, Ld, Lq) {
+            const Vd = omegaE * Ld * Id + omegaE * lambda;
+            const Vq = omegaE * Lq * Iq;
+            const VmaxSq = Vmax * Vmax;
+            return VmaxSq - (Vd * Vd + Vq * Vq);
+        }
+
+        /**
+         * Restrição de Círculo de Corrente
+         * Retorna: Imax² - (Id² + Iq²)
+         */
+        function constraintCurrentCircle(Id, Iq, Imax) {
+            return Imax * Imax - (Id * Id + Iq * Iq);
+        }
+
+        /**
+         * Restrição de Limite de Potência ELÉTRICA
+         * O limite físico real (bateria/inversor) é sobre a potência elétrica
+         * consumida, não a mecânica entregue no eixo. Como Pelet = Pmec / η,
+         * usamos a eficiência do mapa EMRAX 208 no próprio ponto (rpm, Te)
+         * para "esculpir" a curva de torque de acordo com as perdas reais.
+         * Retorna: Pmax - Te*ωm/η(rpm,Te)
+         */
+        function constraintPowerLimit(Id, Iq, omegaM, Pmax, lambda, Ld, Lq, rpm) {
+            const Te = torqueEquation(Id, Iq, lambda, Ld, Lq);
+            const eta = getEficiencia(rpm, Te);
+            const Pelec = eta > 0 ? (Te * omegaM) / eta : Infinity;
+            return Pmax - Pelec;
+        }
+
+        /**
+         * Restrição de Limite Estrutural
+         * Retorna: Tmax - Te
+         */
+        function constraintMaxTorque(Id, Iq, Tmax, lambda, Ld, Lq) {
+            const Te = torqueEquation(Id, Iq, lambda, Ld, Lq);
+            return Tmax - Te;
+        }
+
+        /**
+         * Otimizador SLSQP Simplificado usando Grid Search + Refinamento
+         * Maximiza Te respeitando todas as restrições
+         */
+        function optimizeForRPM(rpm, params) {
+            const { p, lambda, Ld, Lq, Imax, Vmax, Pmax, Tmax } = params;
+
+            const omegaM = rpm * (2 * Math.PI / 60);
+            const omegaE = omegaM * p;
+
+            let bestId = 0, bestIq = 0, bestTe = -Infinity;
+
+            // Grid Search com resolução adaptativa
+            const idStep = Imax / 50;
+            const iqStep = Imax / 50;
+
+            for (let id = -Imax; id <= 0; id += idStep) {
+                for (let iq = 0; iq <= Imax; iq += iqStep) {
+                    // Verificar todas as restrições
+                    if (constraintCurrentCircle(id, iq, Imax) < 0) continue;
+                    if (constraintVoltageEllipse(id, iq, omegaE, Vmax, lambda, Ld, Lq) < 0) continue;
+                    if (constraintPowerLimit(id, iq, omegaM, Pmax, lambda, Ld, Lq, rpm) < 0) continue;
+                    if (constraintMaxTorque(id, iq, Tmax, lambda, Ld, Lq) < 0) continue;
+
+                    const Te = torqueEquation(id, iq, lambda, Ld, Lq);
+                    if (Te > bestTe) {
+                        bestTe = Te;
+                        bestId = id;
+                        bestIq = iq;
+                    }
+                }
+            }
+
+            // Refinamento com busca local
+            const refinementStep = idStep * 0.1;
+            for (let id = Math.max(-Imax, bestId - idStep); id <= Math.min(0, bestId + idStep); id += refinementStep) {
+                for (let iq = Math.max(0, bestIq - iqStep); iq <= Math.min(Imax, bestIq + iqStep); iq += refinementStep) {
+                    if (constraintCurrentCircle(id, iq, Imax) < 0) continue;
+                    if (constraintVoltageEllipse(id, iq, omegaE, Vmax, lambda, Ld, Lq) < 0) continue;
+                    if (constraintPowerLimit(id, iq, omegaM, Pmax, lambda, Ld, Lq, rpm) < 0) continue;
+                    if (constraintMaxTorque(id, iq, Tmax, lambda, Ld, Lq) < 0) continue;
+
+                    const Te = torqueEquation(id, iq, lambda, Ld, Lq);
+                    if (Te > bestTe) {
+                        bestTe = Te;
+                        bestId = id;
+                        bestIq = iq;
+                    }
+                }
+            }
+
+            bestTe = Math.max(0, bestTe);
+
+            return { Id: bestId, Iq: bestIq, Te: bestTe };
+        }
+
+        // =====================================================================
+        // FUNÇÃO PRINCIPAL: OTIMIZAR LUT
+        // =====================================================================
+
+        const correntePorPerfil = Object.freeze({ pico: 190, nominal: 150 });
+
+        function otimizarLUT(perfil) {
+            const correnteMaxima = correntePorPerfil[perfil];
+            document.getElementById('limite-corrente').textContent = correnteMaxima;
+            mostrarMensagem('Otimizando LUT com SLSQP...', 'info');
+
+            // Coleta parâmetros da interface
+            const params = {
+                p: parseFloat(document.getElementById('p').value),
+                lambda: parseFloat(document.getElementById('lambda').value),
+                Ld: parseFloat(document.getElementById('ld').value) * 1e-6,  // µH -> H
+                Lq: parseFloat(document.getElementById('lq').value) * 1e-6,  // µH -> H
+                Imax: correnteMaxima,
+                Vmax: (parseFloat(document.getElementById('vdc').value) / Math.sqrt(3)) * 0.95,
+                Pmax: 80000,
+                Tmax: parseFloat(document.getElementById('tmax').value)
+            };
+
+            const rpm_min = parseFloat(document.getElementById('rpm_min').value);
+            const rpm_max = parseFloat(document.getElementById('rpm_max').value);
+            const rpm_step = parseFloat(document.getElementById('rpm_step').value);
+            const rpm_array = [];
+            for (let rpm = rpm_min; rpm <= rpm_max; rpm += rpm_step) {
+                rpm_array.push(rpm);
+            }
+
+            // Otimização para cada RPM
+            const rpm_results = [];
+            const id_results = [];
+            const iq_results = [];
+            const te_results = [];
+
+            let processados = 0;
+            for (const rpm of rpm_array) {
+                const result = optimizeForRPM(rpm, params);
+                rpm_results.push(rpm);
+                id_results.push(result.Id);
+                iq_results.push(result.Iq);
+                te_results.push(result.Te);
+                processados++;
+
+                // Progress
+                if (processados % Math.ceil(rpm_array.length / 10) === 0) {
+                    const progress = (processados / rpm_array.length * 100).toFixed(1);
+                    mostrarMensagem(`Otimizando... ${progress}%`, 'info');
+                }
+            }
+
+            // Armazena dados globais
+            window.lutData = {
+                rpm: rpm_results,
+                id: id_results,
+                iq: iq_results,
+                te: te_results,
+                params: params
+            };
+
+            // Atualiza UI
+            atualizarEstatisticas(rpm_results, id_results, iq_results, te_results, params);
+            atualizarTabela(rpm_results, id_results, iq_results, te_results, params);
+            criarGraficos(rpm_results, id_results, iq_results, te_results, params);
+
+            mostrarMensagem(`LUT otimizada com sucesso! ${rpm_array.length} pontos calculados.`, 'success');
+        }
+
+        function atualizarEstatisticas(rpm, id, iq, te, params) {
+            const i_total = id.map((d, i) => Math.sqrt(d * d + iq[i] * iq[i]));
+            const omega_m = rpm.map(r => r * (2 * Math.PI / 60));
+            const power = te.map((t, i) => t * omega_m[i]);
+            const eficiencia = rpm.map((r, i) => getEficiencia(r, te[i]));
+
+            document.getElementById('stat-pontos').textContent = rpm.length;
+            document.getElementById('stat-torque-max').textContent = Math.max(...te).toFixed(2) + ' Nm';
+            document.getElementById('stat-imax').textContent = Math.max(...i_total).toFixed(2) + ' A';
+            document.getElementById('stat-pmax').textContent = (Math.max(...power) / 1000).toFixed(2) + ' kW';
+
+            const idxPmax = power.indexOf(Math.max(...power));
+            document.getElementById('stat-eff-pmax').textContent = (eficiencia[idxPmax] * 100).toFixed(1) + ' %';
+            const effMedia = eficiencia.reduce((a, b) => a + b, 0) / eficiencia.length;
+            document.getElementById('stat-eff-media').textContent = (effMedia * 100).toFixed(1) + ' %';
+        }
+
+        function atualizarTabela(rpm, id, iq, te, params) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            const zona_trans = parseFloat(document.getElementById('zona_transicao').value);
+            const zona_enfr = parseFloat(document.getElementById('zona_enfraquecimento').value);
+
+            rpm.forEach((r, idx) => {
+                const d = id[idx];
+                const q = iq[idx];
+                const t = te[idx];
+                const i_tot = Math.sqrt(d * d + q * q);
+                const omega_m = r * (2 * Math.PI / 60);
+                const power = t * omega_m;
+                const eficiencia = getEficiencia(r, t);
+                const powerEletrica = eficiencia > 0 ? power / eficiencia : 0;
+
+                let zona = '';
+                if (r <= zona_trans) zona = 'Torque Máximo';
+                else if (r <= zona_enfr) zona = 'Transição/P.Const';
+                else zona = 'Enfraquec. Campo';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="numeric">${r.toFixed(0)}</td>
+                    <td class="numeric">${d.toFixed(3)}</td>
+                    <td class="numeric">${q.toFixed(2)}</td>
+                    <td class="numeric">${i_tot.toFixed(2)}</td>
+                    <td class="numeric">${t.toFixed(2)}</td>
+                    <td class="numeric">${(power / 1000).toFixed(2)}</td>
+                    <td class="numeric">${(eficiencia * 100).toFixed(1)}</td>
+                    <td class="numeric">${(powerEletrica / 1000).toFixed(2)}</td>
+                    <td>${zona}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function criarMapaEficiencia(rpm, te) {
+            const ctx = document.getElementById('chartEficiencia').getContext('2d');
+            if (chartEficiencia) chartEficiencia.destroy();
+
+            const niveis = [
+                { t: 1, label: '≥ 96%', color: '#3b82f6' },
+                { t: 2, label: '95 – 96%', color: '#f85149' },
+                { t: 3, label: '94 – 95%', color: '#3fb950' },
+                { t: 4, label: '90 – 94%', color: '#a855f7' },
+                { t: 5, label: '86 – 90%', color: '#22d3ee' }
+            ];
+
+            const datasets = niveis.map(n => ({
+                label: n.label,
+                data: eff_contourPoints(n.t),
+                borderColor: n.color,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 0,
+                showLine: true,
+                fill: false,
+                tension: 0.15
+            }));
+
+            datasets.push({
+                label: 'Curva otimizada (SLSQP)',
+                data: rpm.map((r, i) => ({ x: r, y: te[i] })),
+                borderColor: '#ffffff',
+                backgroundColor: '#ffffff',
+                borderWidth: 2.5,
+                borderDash: [6, 3],
+                pointRadius: 0,
+                showLine: true,
+                fill: false,
+                tension: 0.3
+            });
+
+            chartEficiencia = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: colors.text, font: { size: 11, weight: '600' }, padding: 12 } },
+                        tooltip: {
+                            backgroundColor: 'rgba(13, 17, 23, 0.9)',
+                            borderColor: colors.grid,
+                            borderWidth: 1,
+                            titleColor: colors.text,
+                            bodyColor: colors.text,
+                            callbacks: {
+                                label: c => `${c.dataset.label}: ${c.parsed.y.toFixed(1)} Nm @ ${c.parsed.x.toFixed(0)} rpm`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: 'Velocidade do motor (rpm)', color: colors.text },
+                            ticks: { color: colors.text }, grid: { color: colors.grid }
+                        },
+                        y: {
+                            title: { display: true, text: 'Torque (Nm)', color: colors.text },
+                            ticks: { color: colors.text }, grid: { color: colors.grid }
+                        }
+                    }
+                }
+            });
+        }
+
+        function criarGraficos(rpm, id, iq, te, params) {
+            const i_total = id.map((d, i) => Math.sqrt(d * d + iq[i] * iq[i]));
+            const omega_m = rpm.map(r => r * (2 * Math.PI / 60));
+            const power = te.map((t, i) => t * omega_m[i]);
+
+            criarMapaEficiencia(rpm, te);
+
+            // Configuração padrão
+            const chartConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: colors.text, font: { size: 12, weight: '600' }, padding: 15 } },
+                    tooltip: {
+                        backgroundColor: 'rgba(13, 17, 23, 0.9)',
+                        borderColor: colors.grid,
+                        borderWidth: 1,
+                        titleColor: colors.text,
+                        bodyColor: colors.text,
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.parsed.y;
+                                return context.dataset.label + ': ' + (typeof value === 'number' ? value.toFixed(2) : value);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: colors.text, font: { size: 11 } }, grid: { color: colors.grid } },
+                    y: {
+                        ticks: { color: colors.text, font: { size: 11 }, callback: v => v.toFixed(2) },
+                        grid: { color: colors.grid }
+                    }
+                }
+            };
+
+            // GRÁFICO DEGRADAÇÃO
+            const vdc_deg_min = parseFloat(document.getElementById('vdc_deg_min').value);
+            const vdc_deg_max = parseFloat(document.getElementById('vdc_deg_max').value);
+            const vdc_deg_step = parseFloat(document.getElementById('vdc_deg_step').value) || 10;
+
+            const tensoes = [];
+            for (let v = vdc_deg_max; v >= vdc_deg_min - 1e-9; v -= vdc_deg_step) {
+                tensoes.push(parseFloat(v.toFixed(2)));
+            }
+            // Garante que a tensão mínima exata entre na leitura, mesmo que não caia num múltiplo do passo
+            if (tensoes.length === 0 || Math.abs(tensoes[tensoes.length - 1] - vdc_deg_min) > 1e-9) {
+                tensoes.push(parseFloat(vdc_deg_min.toFixed(2)));
+            }
+
+            const datasets_deg = [];
+            const core_colors = ['#3fb950', '#79c0ff', '#d29922', '#f85149', '#bc8ef8', '#ff7b72', '#a5d6ff', '#e3b341', '#7ee787', '#d2a8ff'];
+
+            // Guarda a matriz completa (tensão x rpm) para exportação em planilha
+            const degradacaoExport = { rpm: rpm.slice(), tensoes: tensoes.slice(), torque: [] };
+
+            tensoes.forEach((Vdc, idx) => {
+                const Pmax_local = Math.min(params.Pmax, Vdc * 120);
+                const Vmax_local = (Vdc / Math.sqrt(3)) * 0.95;
+                const torque_deg = [];
+
+                rpm.forEach(r => {
+                    const om_m = r * (2 * Math.PI / 60);
+                    const om_e = om_m * params.p;
+
+                    const result = optimizeForRPM(r, { ...params, Vmax: Vmax_local, Pmax: Pmax_local });
+                    torque_deg.push(result.Te);
+                });
+
+                degradacaoExport.torque.push(torque_deg);
+
+                datasets_deg.push({
+                    label: `${Vdc.toFixed(1)}V (${(Pmax_local / 1000).toFixed(1)}kW)`,
+                    data: torque_deg,
+                    borderColor: core_colors[idx % core_colors.length],
+                    borderWidth: 2.5,
+                    fill: false,
+                    pointRadius: 0,
+                    tension: 0.4
+                });
+            });
+
+            window.degradacaoData = degradacaoExport;
+
+            const ctxDeg = document.getElementById('chartDegradacao').getContext('2d');
+            if (chartDegradacao) chartDegradacao.destroy();
+            chartDegradacao = new Chart(ctxDeg, {
+                type: 'line',
+                data: { labels: rpm.map(r => r.toFixed(0)), datasets: datasets_deg },
+                options: { ...chartConfig, scales: { ...chartConfig.scales, y: { ...chartConfig.scales.y, title: { display: true, text: 'Torque (Nm)', color: colors.text } } } }
+            });
+
+            // GRÁFICO TORQUE
+            const ctxTorque = document.getElementById('chartTorque').getContext('2d');
+            if (chartTorque) chartTorque.destroy();
+            chartTorque = new Chart(ctxTorque, {
+                type: 'line',
+                data: {
+                    labels: rpm.map(r => r.toFixed(0)),
+                    datasets: [{
+                        label: 'Torque (Nm)',
+                        data: te,
+                        borderColor: colors.torque,
+                        backgroundColor: 'rgba(63, 185, 80, 0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        pointRadius: 1,
+                        tension: 0.4
+                    }]
+                },
+                options: chartConfig
+            });
+
+            // GRÁFICO CORRENTES
+            const ctxCorrentes = document.getElementById('chartCorrentes').getContext('2d');
+            if (chartCorrentes) chartCorrentes.destroy();
+            chartCorrentes = new Chart(ctxCorrentes, {
+                type: 'line',
+                data: {
+                    labels: rpm.map(r => r.toFixed(0)),
+                    datasets: [
+                        { label: 'Id (A)', data: id, borderColor: colors.id, borderWidth: 2.5, fill: false, pointRadius: 0, tension: 0.4 },
+                        { label: 'Iq (A)', data: iq, borderColor: colors.iq, borderWidth: 2.5, fill: false, pointRadius: 0, tension: 0.4 }
+                    ]
+                },
+                options: chartConfig
+            });
+
+            // GRÁFICO CORRENTE TOTAL
+            const ctxITotal = document.getElementById('chartITotal').getContext('2d');
+            if (chartITotal) chartITotal.destroy();
+            chartITotal = new Chart(ctxITotal, {
+                type: 'line',
+                data: {
+                    labels: rpm.map(r => r.toFixed(0)),
+                    datasets: [{
+                        label: 'I Total (A)',
+                        data: i_total,
+                        borderColor: colors.iTotal,
+                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        pointRadius: 1,
+                        tension: 0.4
+                    }]
+                },
+                options: chartConfig
+            });
+
+            // GRÁFICO POTÊNCIA
+            const ctxPower = document.getElementById('chartPower').getContext('2d');
+            if (chartPower) chartPower.destroy();
+            chartPower = new Chart(ctxPower, {
+                type: 'line',
+                data: {
+                    labels: rpm.map(r => r.toFixed(0)),
+                    datasets: [{
+                        label: 'Potência (kW)',
+                        data: power.map(p => p / 1000),
+                        borderColor: colors.power,
+                        backgroundColor: 'rgba(188, 142, 248, 0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        pointRadius: 1,
+                        tension: 0.4
+                    }]
+                },
+                options: chartConfig
+            });
+        }
+
+        // =====================================================================
+        // FUNÇÕES DE EXPORTAÇÃO
+        // =====================================================================
+
+        function exportarCSV() {
+            if (!window.lutData) {
+                mostrarMensagem('Gere a LUT primeiro', 'error');
+                return;
+            }
+
+            const { rpm, id, iq, te } = window.lutData;
+            let csv = '\uFEFF'; // BOM UTF-8
+            csv += 'RPM;Id (A);Iq (A);Torque (Nm);Eficiência (%);P. Mecânica (kW);P. Elétrica (kW)\n';
+
+            rpm.forEach((r, idx) => {
+                const omega_m = r * (2 * Math.PI / 60);
+                const pMec = te[idx] * omega_m;
+                const eff = getEficiencia(r, te[idx]);
+                const pEle = eff > 0 ? pMec / eff : 0;
+
+                const rpm_str = r.toFixed(1).replace('.', ',');
+                const id_str = id[idx].toFixed(3).replace('.', ',');
+                const iq_str = iq[idx].toFixed(2).replace('.', ',');
+                const te_str = te[idx].toFixed(2).replace('.', ',');
+                const eff_str = (eff * 100).toFixed(1).replace('.', ',');
+                const pMec_str = (pMec / 1000).toFixed(3).replace('.', ',');
+                const pEle_str = (pEle / 1000).toFixed(3).replace('.', ',');
+                csv += `${rpm_str};${id_str};${iq_str};${te_str};${eff_str};${pMec_str};${pEle_str}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'emrax_lut_optimized.csv';
+            link.click();
+            mostrarMensagem('CSV exportado', 'success');
+        }
+
+        function exportarHeaderC() {
+            if (!window.lutData) {
+                mostrarMensagem('Gere a LUT primeiro', 'error');
+                return;
+            }
+
+            const { rpm, id, iq, te } = window.lutData;
+            let header = '// EMRAX 208 HV LC - LUT Otimizada\n';
+            header += '// Método: SLSQP Optimization\n\n';
+            header += `#define LUT_SIZE ${rpm.length}\n\n`;
+            header += 'const float LUT_RPM[LUT_SIZE] = {' + rpm.map(r => r.toFixed(1)).join(', ') + '};\n\n';
+            header += 'const float LUT_ID[LUT_SIZE] = {' + id.map(d => d.toFixed(3)).join(', ') + '};\n\n';
+            header += 'const float LUT_IQ[LUT_SIZE] = {' + iq.map(q => q.toFixed(2)).join(', ') + '};\n\n';
+            header += 'const float LUT_TRQ[LUT_SIZE] = {' + te.map(t => t.toFixed(2)).join(', ') + '};\n\n';
+            header += 'const float LUT_ETA[LUT_SIZE] = {' + rpm.map((r, i) => (getEficiencia(r, te[i]) * 100).toFixed(1)).join(', ') + '};\n';
+
+            const blob = new Blob([header], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'emrax_lut_optimized.h';
+            link.click();
+            mostrarMensagem('Header C exportado', 'success');
+        }
+
+        function exportarDegradacaoCSV() {
+            if (!window.degradacaoData) {
+                mostrarMensagem('Gere a LUT primeiro', 'error');
+                return;
+            }
+
+            const { rpm, tensoes, torque } = window.degradacaoData;
+
+            let csv = '\uFEFF'; // BOM UTF-8
+            // Cabeçalho: RPM;403,2V;393,2V;383,2V;...
+            csv += 'RPM;' + tensoes.map(v => v.toFixed(1).replace('.', ',') + 'V').join(';') + '\n';
+
+            rpm.forEach((r, i) => {
+                const linha = [r.toFixed(1).replace('.', ',')];
+                tensoes.forEach((v, j) => {
+                    linha.push(torque[j][i].toFixed(2).replace('.', ','));
+                });
+                csv += linha.join(';') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'emrax_curva_degradacao_tensao.csv';
+            link.click();
+            mostrarMensagem('Planilha de degradação exportada', 'success');
+        }
+
+        function exportarJSON() {
+            if (!window.lutData) {
+                mostrarMensagem('Gere a LUT primeiro', 'error');
+                return;
+            }
+
+            const data = {
+                metadata: {
+                    motor: 'EMRAX 208 HV LC',
+                    method: 'SLSQP Optimization',
+                    timestamp: new Date().toISOString(),
+                    parameters: window.lutData.params
+                },
+                lut: {
+                    rpm: window.lutData.rpm,
+                    id: window.lutData.id,
+                    iq: window.lutData.iq,
+                    torque: window.lutData.te,
+                    eficiencia_pct: window.lutData.rpm.map((r, i) => parseFloat((getEficiencia(r, window.lutData.te[i]) * 100).toFixed(2)))
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'emrax_lut_optimized.json';
+            link.click();
+            mostrarMensagem('JSON exportado', 'success');
+        }
+
+        // =====================================================================
+        // FUNÇÕES AUXILIARES
+        // =====================================================================
+
+        function mostrarMensagem(texto, tipo) {
+            const msg = document.getElementById('statusMessage');
+            msg.textContent = texto;
+            msg.className = `status-message status-${tipo}`;
+            setTimeout(() => msg.style.display = 'none', 5000);
+        }
+
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function voltarPagina() {
+            if (document.referrer && history.length > 1) history.back();
+            else window.location.href = 'menu_am07.html';
+        }
+
+        // Auto-gera ao carregar
+        window.addEventListener('load', () => {
+            const perfis = document.querySelectorAll('input[name="perfil"]');
+            for (const opcao of perfis) {
+                opcao.addEventListener('change', () => {
+                    if (opcao.checked) otimizarLUT(opcao.value);
+                });
+            }
+            otimizarLUT(document.querySelector('input[name="perfil"]:checked').value);
+        });
+    </script>
+</body>
+</html>

@@ -249,17 +249,18 @@
         .lap-shortcuts .lap-return { color: #f4c430; }
         .tab-content h2[id] { scroll-margin-top: 78px; }
     </style>
+  <link rel="stylesheet" href="../marca-equipe.css">
 </head>
 <body>
 
     <nav class="topnav" aria-label="Navegação">
-        <button class="nav-btn" type="button" onclick="window.location.href='menu_am07.html'">
+        <button class="nav-btn" type="button" onclick="window.location.href='../menu_am07.html'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg>Voltar
         </button>
         <div class="crumbs">
             <a href="#">AM-07</a><span>/</span><a href="#">Powertrain</a><span>/</span><span class="here">Optimum Lap</span>
         </div>
-        <div class="nav-team">UFPR FÓRMULA</div>
+        <div class="nav-team"><img class="team-logo is-white" src="../imagens/LOGO-Branca.png" width="124" height="40" alt="UFPR Fórmula"></div>
     </nav>
 
     <div class="main-wrapper">
@@ -278,7 +279,7 @@
                 <span>Acceleration</span>
             </button>
             <nav class="lap-shortcuts" id="lap-shortcuts" aria-label="Atalhos do Optimum Lap">
-                <a class="lap-return" href="index.html#ferramentas">← Central de Elétrica</a>
+                <a class="lap-return" href="../index.html#ferramentas">← Central de Elétrica</a>
                 <ul data-lap-section="enduro">
                     <li><a href="#enduro-dados">Importar CSV</a></li>
                     <li><a href="#enduro-estatisticas">Estatísticas da volta</a></li>

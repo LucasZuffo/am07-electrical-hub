@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklist de energização · AM-07</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; color-scheme: dark; background: #060b1a; color: #eef1f8; font: 1rem/1.55 system-ui,sans-serif; }
+  main { width: min(1050px, calc(100% - 32px)); margin: 32px auto; display: grid; grid-template-columns: 215px minmax(0, 1fr); gap: 18px; align-items: start; }
+  nav, section { background: #0d1830; border: 1px solid #1c3a6e; border-radius: 8px; padding: 18px; }
+  nav { position: sticky; top: 18px; }
+  nav a { display: block; padding: 7px 0; color: #f4c430; }
+  h1 { margin: 0 0 8px; line-height: 1.15; }
+  h2 { margin-top: 0; }
+  section { margin-top: 16px; }
+  .draft { color: #ffde59; }
+  fieldset { border: 0; padding: 0; margin: 0 0 16px; }
+  legend { margin-bottom: 8px; }
+  label { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; }
+  input { accent-color: #f4c430; width: 18px; height: 18px; flex: none; }
+  button { font: inherit; min-height: 44px; margin: 4px 6px 4px 0; padding: 6px 12px; border: 1px solid #f4c430; border-radius: 6px; background: #10203f; color: #eef1f8; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: default; }
+  :focus-visible { outline: 2px solid #ffde59; outline-offset: 3px; }
+  @media (max-width: 670px) { main { grid-template-columns: 1fr; } nav { position: static; } }
+  .checklist-heading { padding: clamp(18px, 4vw, 32px); background: linear-gradient(115deg, #10203f, #0d1830); border: 1px solid #1c3a6e; border-left: 4px solid #f4c430; border-radius: 8px; }
+  .checklist-area { margin: 0 0 8px; color: #f4c430; font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .checklist-heading .draft { margin: 12px 0 0; }
+  .checklist-progress { padding: 12px; margin-bottom: 16px; background: #081332; border-radius: 6px; }
+  .checklist-progress label { min-height: auto; margin-bottom: 6px; cursor: default; }
+  progress { display: block; width: 100%; height: 10px; accent-color: #f4c430; }
+  fieldset label { margin-block: 6px; padding: 8px; background: #081332; border: 1px solid #1c3a6e; border-radius: 6px; }
+  fieldset label:has(input:checked) { border-color: #f4c430; }
+  body { background: radial-gradient(ellipse at top right, #14264a, transparent 58%), #060b1a; }
+  nav a:first-child { padding: 10px; border: 1px solid #1c3a6e; border-radius: 6px; text-decoration: none; }
+  nav a:first-child:hover { border-color: #f4c430; }
+  .nav-caption { margin: 18px 0 8px; color: #aebbd6; font-size: .8rem; }
+  nav .step { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: 4px 0; padding: 6px; background: #081332; border: 1px solid #1c3a6e; border-radius: 6px; color: #eef1f8; text-decoration: none; text-align: left; font-size: .875rem; }
+  .step span { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; background: #10203f; color: #ffde59; }
+  .step:not(:disabled):hover, .step[aria-expanded="true"] { border-color: #f4c430; }
+  .step-state { color: #aebbd6; font-size: .75rem; margin: 6px 0 0; }
+  .inspection-items div { padding: 10px; margin-block: 6px; background: #081332; border-radius: 6px; }
+  .inspection-items dt { font-weight: 700; color: #ffde59; }
+  .inspection-items dd { margin: 4px 0 0; }
+  .stage-number { display: inline-block; border-right: 2px solid #f4c430; color: #f4c430; padding-right: 10px; margin-right: 4px; }
+  #inspection-fields { margin-top: 16px; }
+  #inspection-fields:disabled { opacity: .65; }
+  #inspection-fields textarea { display: block; width: 100%; min-height: 90px; padding: 10px; font: inherit; border: 1px solid #1c3a6e; border-radius: 6px; background: #081332; color: #eef1f8; resize: vertical; }
+  .checklist-heading { min-height: 220px; background: linear-gradient(90deg, #0d1830 22%, rgb(13 24 48 / 86%) 51%, rgb(13 24 48 / 15%) 100%), url("../imagens/WhatsApp%20Image%202026-09-29%20at%2000.16.21.jpeg") right 56% / auto 210% no-repeat, #0d1830; }
+  .checklist-heading .team-logo { margin-bottom: 14px; }
+  @media (max-width: 480px) { .checklist-heading { background-size: auto, auto 160%; } }
+</style>
+  <link rel="stylesheet" href="../marca-equipe.css">
+</head>
+<body>
+<main>
+  <nav aria-label="Checklist de energização">
+    <a href="../index.html#alta-tensao">← Central de Elétrica</a>
+    <p class="nav-caption">Etapas do checklist</p>
+    <a class="step" href="#epi"><span>1</span> Conferência de EPIs</a>
+    <a class="step" href="#inspecao"><span>2</span> Inspeção visual</a>
+    <p id="inspection-state" class="step-state">Pendente de conferência dos EPIs</p>
+  </nav>
+  <div>
+    <header class="checklist-heading">
+      <img class="team-logo is-white" src="../imagens/LOGO-Branca.png" width="124" height="40" alt="UFPR Fórmula">
+      <p class="checklist-area">AM-07 · Alta tensão</p>
+      <h1>Checklist de energização</h1>
+    <p class="draft"><strong>Rascunho para revisão. Não autoriza a energização.</strong></p>
+    </header>
+    <section id="epi" aria-labelledby="epi-title">
+      <h2 id="epi-title"><span class="stage-number">1</span> Conferência de EPIs</h2>
+      <form id="checklist" autocomplete="off">
+        <div class="checklist-progress">
+          <label for="epi-progress" id="epi-count">0 de 3 itens conferidos</label>
+          <progress id="epi-progress" max="3" value="0" aria-labelledby="epi-count"></progress>
+        </div>
+        <fieldset>
+          <legend>Confirme os itens conforme a avaliação de risco e o procedimento da equipe.</legend>
+          <label><input type="checkbox" required> Luvas especificadas para a tarefa, conferidas e em uso</label>
+          <label><input type="checkbox" required> Proteção ocular especificada, conferida e em uso</label>
+          <label><input type="checkbox" required> Demais EPIs exigidos para a tarefa conferidos</label>
+        </fieldset>
+        <button id="next" type="submit" disabled>Abrir etapa 2</button>
+        <button type="reset">Limpar conferência</button>
+      </form>
+      <p id="status" role="status"></p>
+    </section>
+    <section id="inspecao" aria-labelledby="inspection-title">
+      <h2 id="inspection-title" tabindex="-1"><span class="stage-number">2</span> Inspeção visual</h2>
+      <p>Use esta seção para revisar os critérios com o responsável de alta tensão.</p>
+      <dl class="inspection-items">
+        <div><dt>Barramentos e barreiras</dt><dd>Definir quais proteções devem estar presentes e registrar qualquer exposição ou dano visível.</dd></div>
+        <div><dt>BMS</dt><dd>Definir o estado esperado das conexões com base no esquema aprovado.</dd></div>
+        <div><dt>AMD</dt><dd>Confirmar com a equipe o estado exigido nesta etapa e como ele deve ser identificado.</dd></div>
+        <div><dt>Área ao redor</dt><dd>Definir o que deve ficar livre e como registrar objetos soltos ou contato indesejado.</dd></div>
+      </dl>
+      <fieldset id="inspection-fields" disabled>
+        <label for="inspection-notes">Observações para a revisão da equipe</label>
+        <textarea id="inspection-notes" autocomplete="off"></textarea>
+      </fieldset>
+      <p class="draft">Critérios em revisão. Se houver dúvida ou divergência, interrompa a atividade e encaminhe ao responsável.</p>
+    </section>
+    <section id="procedimento" aria-labelledby="procedure-title">
+      <h2 id="procedure-title" tabindex="-1">Procedimento do AM-07</h2>
+      <p>Etapas operacionais pendentes de validação pelo responsável de alta tensão.</p>
+      <ul>
+        <li>Maintenance plugs</li>
+        <li>Carregador e verificação das células</li>
+        <li>Critérios de parada e liberação da operação</li>
+      </ul>
+    </section>
+  </div>
+</main>
+<script>
+  const checklist = document.getElementById('checklist');
+  const next = document.getElementById('next');
+  const status = document.getElementById('status');
+  const boxes = [...checklist.querySelectorAll('input[type="checkbox"]')];
+  const progress = document.getElementById('epi-progress');
+  const count = document.getElementById('epi-count');
+  const inspectionFields = document.getElementById('inspection-fields');
+  const inspectionState = document.getElementById('inspection-state');
+  function updateChecklist() {
+    const checked = boxes.filter((box) => box.checked).length;
+    progress.max = boxes.length;
+    progress.value = checked;
+    count.textContent = checked + ' de ' + boxes.length + ' itens conferidos';
+    next.disabled = !checklist.checkValidity();
+    inspectionFields.disabled = next.disabled;
+    inspectionState.textContent = next.disabled ? 'Pendente de conferência dos EPIs' : 'Disponível para revisão';
+    status.textContent = '';
+  }
+  checklist.addEventListener('change', updateChecklist);
+  checklist.addEventListener('reset', () => requestAnimationFrame(updateChecklist));
+  function openInspection() {
+    if (!checklist.checkValidity()) return;
+    status.textContent = 'Conferência de EPIs preenchida nesta página.';
+    document.getElementById('inspection-title').focus();
+  }
+  checklist.addEventListener('submit', (event) => {
+    event.preventDefault();
+    openInspection();
+  });
+  window.addEventListener('pageshow', () => { checklist.reset(); document.getElementById('inspection-notes').value = ''; updateChecklist(); });
+</script>
+</body>
+</html>

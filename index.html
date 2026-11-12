@@ -32,7 +32,7 @@
     background:
       linear-gradient(90deg, rgb(6 11 26 / 86%), rgb(6 11 26 / 14%) 80%),
       linear-gradient(0deg, var(--navy), transparent 65%),
-      url("./nik3189-scaled.jpg") center 50% / cover no-repeat,
+      url("./imagens/nik3189-scaled.jpg") center 50% / cover no-repeat,
       var(--panel);
   }
   .vehicle { margin: 0 0 8px; color: var(--yellow); font: 600 1.2rem Oswald, sans-serif; letter-spacing: .2em; }
@@ -56,12 +56,17 @@
     .wrap { width: calc(100% - 32px); }
     .hero { background-position: center, center, center 50%; }
   }
+  .tool-group { margin: 16px 0 10px; font-weight: 500; }
+  .inverter-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .inverter-actions a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 10px; color: var(--yellow); border: 1px solid var(--line); border-radius: 6px; text-decoration: none; font-size: .875rem; }
+  .inverter-actions a:hover, .inverter-actions a:focus-visible { border-color: var(--yellow); }
 </style>
 <link rel="stylesheet" href="dashboard-nav.css">
+  <link rel="stylesheet" href="marca-equipe.css">
 </head>
 <body>
 <header class="dashboard-header">
-  <span class="brand">UFPR Fórmula</span>
+  <img class="team-logo is-white" src="imagens/LOGO-Branca.png" width="124" height="40" alt="UFPR Fórmula">
   <nav aria-label="Navegação da Central de Elétrica">
     <ul class="topnav">
       <li><a href="index.html" aria-current="page">Ferramentas</a></li>
@@ -80,24 +85,20 @@
   <section aria-labelledby="ferramentas">
     <h2 id="ferramentas">Ferramentas do projeto</h2>
     <ul>
-      <li><a class="card" href="menu_am07.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h6"/></svg><div><h3>Design &amp; Cost</h3><p>Apresentação do AM-07 e documentação de custos.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-      <li><a class="card" href="Curva_torqueRPM_V4.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 1 1 16 0v2H4z M12 16l4-5 M7 13l1 1 M12 9v1"/><circle cx="12" cy="16" r="1"/></svg><div><h3>Torque e rotação</h3><p>Curvas do motor e parâmetros da análise.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-      <li><a class="card" href="optimum_lap.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4c-4 0-5 4-3 7l3 3c2 2 1 6 4 6h5c3 0 4-3 2-5l-3-3c-2-2 1-4-1-6-1-2-4-2-7-2z M4 8h5 M6.5 5.5v5"/></svg><div><h3>Optimum Lap</h3><p>Resultados de simulação de volta.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-    </ul>
-  </section>
-  <section aria-labelledby="eletronica">
-    <h2 id="eletronica">Eletrônica</h2>
-    <ul>
-      <li><a class="card" href="telemetria/index.html#inversor-demo"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M5 12h3l2-4 3 8 2-4h4"/></svg><div><h3>Simular inversor</h3><p>Abra a bancada virtual com dados simulados.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-      <li><a class="card" href="telemetria/index.html#inversor-usb"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-3 3 3-3 3 3M12 15l-5-4V8m5 9 5-4v-3"/><circle cx="12" cy="21" r="1"/><path d="M16 8h2v2h-2z"/></svg><div><h3>Inversor via USB</h3><p>Abra a configuração para leitura pelo receptor local.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-      <li><a class="card" href="telemetria/index.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M3 18V6m2 7h3l2-4 3 6 2-4h5"/></svg><div><h3>Leitura de telemetria</h3><p>Abra o painel de telemetria do AM-07.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
-      <li><article class="card pending"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z M14 3v5h5 M8 14h2l1-3 2 6 1-3h2"/></svg><div><h3>Leitor de arquivos do inversor</h3><p>Aguardando a integração do código existente.</p></div></article></li>
+      <li><a class="card" href="ferramentas/Curva_torqueRPM_V4.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 1 1 16 0v2H4z M12 16l4-5 M7 13l1 1 M12 9v1"/><circle cx="12" cy="16" r="1"/></svg><div><h3>Torque e rotação</h3><p>Curvas do motor e parâmetros da análise.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
+      <li><a class="card" href="ferramentas/optimum_lap.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4c-4 0-5 4-3 7l3 3c2 2 1 6 4 6h5c3 0 4-3 2-5l-3-3c-2-2 1-4-1-6-1-2-4-2-7-2z M4 8h5 M6.5 5.5v5"/></svg><div><h3>Optimum Lap</h3><p>Resultados de simulação de volta.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
     </ul>
   </section>
   <section aria-labelledby="alta-tensao">
-    <h2 id="alta-tensao">Alta tensão · Acumulador</h2>
+    <h2 id="alta-tensao">Alta tensão</h2>
+    <h3 class="tool-group">Inversor</h3>
     <ul>
-      <li><article class="card pending"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="17" height="10" rx="2"/><path d="M22 10v4 M12 9l-3 4h4l-2 2"/></svg><div><h3>Checklist de energização</h3><p>Aguardando o procedimento aprovado pela equipe.</p></div></article></li>
+      <li><article class="card inverter-card"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M5 12h3l2-4 3 8 2-4h4"/></svg><div><h3>Bancada do inversor</h3><p>Simulação e leitura do inversor do AM-07.</p><div class="inverter-actions"><a href="telemetria/index.html#inversor-demo">Simular</a><a href="telemetria/index.html#inversor-usb">Conectar via USB</a></div></div></article></li>
+      <li><article class="card pending"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z M14 3v5h5 M8 14h2l1-3 2 6 1-3h2"/></svg><div><h3>Leitor de arquivos do inversor</h3><p>Aguardando a integração do código existente.</p></div></article></li>
+    </ul>
+    <h3 class="tool-group">Acumulador</h3>
+    <ul>
+      <li><a class="card" href="ferramentas/checklist-energizacao.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="17" height="10" rx="2"/><path d="M22 10v4 M12 9l-3 4h4l-2 2"/></svg><div><h3>Checklist de energização</h3><p>Rascunho para revisão da equipe.</p></div><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a></li>
       <li><article class="card pending"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z M4 7.5l8 4.5 8-4.5 M12 12v9 M8 5.3l8 4.5"/></svg><div><h3>Guia visual de montagem</h3><p>Planejado para uma próxima etapa.</p></div></article></li>
     </ul>
   </section>

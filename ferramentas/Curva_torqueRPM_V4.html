@@ -413,23 +413,24 @@
             .tool-sidebar ul { display: flex; flex-wrap: wrap; }
         }
     </style>
+  <link rel="stylesheet" href="../marca-equipe.css">
 </head>
 <body>
     <nav class="topnav" aria-label="Navegação">
         <button class="nav-btn" type="button" onclick="voltarPagina()" aria-label="Voltar à página anterior">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19"/></svg>Voltar
         </button>
-        <a class="nav-btn" href="index.html" aria-label="Ir à Central de Elétrica">
+        <a class="nav-btn" href="../index.html" aria-label="Ir à Central de Elétrica">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 L12 4 L20 11"/><path d="M6 10 V20 H18 V10"/></svg>Menu
         </a>
         <div class="crumbs">
-            <a href="menu_am07.html">AM-07</a><span>›</span><a href="menu_am07.html">Powertrain</a><span>›</span><span class="here">Curva de Torque</span>
+            <a href="../menu_am07.html">AM-07</a><span>›</span><a href="../menu_am07.html">Powertrain</a><span>›</span><span class="here">Curva de Torque</span>
         </div>
-        <div class="nav-team">UFPR FÓRMULA</div>
+        <div class="nav-team"><img class="team-logo is-white" src="../imagens/LOGO-Branca.png" width="124" height="40" alt="UFPR Fórmula"></div>
     </nav>
     <div class="tool-layout">
         <nav class="tool-sidebar" aria-labelledby="tool-sidebar-title">
-            <a class="tool-return" href="index.html#ferramentas">← Central de Elétrica</a>
+            <a class="tool-return" href="../index.html#ferramentas">← Central de Elétrica</a>
             <h2 id="tool-sidebar-title">Torque e rotação</h2>
             <ul>
                 <li><a href="#parametros">Parâmetros</a></li>
@@ -1476,7 +1477,7 @@
 
         function voltarPagina() {
             if (document.referrer && history.length > 1) history.back();
-            else window.location.href = 'index.html';
+            else window.location.href = '../index.html';
         }
 
         const toolLinks = document.querySelectorAll('.tool-sidebar a[href^="#"]');

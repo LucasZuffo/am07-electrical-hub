@@ -1,7 +1,11 @@
-html { overflow-y: scroll; }
+html { overflow-y: scroll; scroll-padding-top: 70px; }
 .dashboard-header {
-  width: min(1120px, calc(100% - 48px));
-  margin-inline: auto;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-inline: max(24px, calc((100% - 1120px) / 2));
+  background: #060b1a;
+  border-bottom: 1px solid #1c3a6e;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -35,5 +39,6 @@ html { overflow-y: scroll; }
 .dashboard-header a:hover { color: #f4c430; border-color: #f4c430; }
 .dashboard-header a:focus-visible { outline: 2px solid #f4c430; outline-offset: 2px; }
 @media (max-width: 600px) {
-  .dashboard-header { width: calc(100% - 32px); }
+  html { scroll-padding-top: 118px; }
+  .dashboard-header { padding-inline: 16px; }
 }

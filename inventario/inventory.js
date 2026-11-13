@@ -76,7 +76,7 @@
 
   if (!elements.list || !elements.form || !elements.modal) return;
 
-  const appShell = document.querySelector(".app-shell");
+  const appShell = document.querySelector(".inventory-shell");
   const unitLabels = {
     un: "un",
     par: "par",

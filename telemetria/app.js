@@ -6,8 +6,7 @@ const pageNames = {
   chassis: "Deformação mecânica do chassis",
   brakes: "Pressão da linha de freio",
   bearing: "Vibração do mancal",
-  development: "Monitoramento do chicote",
-  database: "Banco de dados do carro"
+  development: "Monitoramento do chicote"
 };
 const dashboardTitle = document.title;
 
@@ -514,7 +513,7 @@ function renderNavigationAlert(pageId, active, reason = "") {
   if (!navItem) return;
 
   const baseLabel = pageNames[pageId] ?? pageId;
-  if (pageId === "overview" || pageId === "database") {
+  if (pageId === "overview") {
     navItem.dataset.alert = "false";
     navItem.setAttribute("aria-label", baseLabel);
     navItem.removeAttribute("title");
@@ -549,7 +548,7 @@ function queueNavigationAlertAnnouncement(pageId, message) {
 }
 
 function setNavigationAlert(pageId, active, reason = "", announce = true) {
-  if (!monitoredAlertPages.includes(pageId) || pageId === "database") return;
+  if (!monitoredAlertPages.includes(pageId)) return;
 
   const nextState = { active: Boolean(active), reason: active ? reason : "" };
   const previousState = navigationAlertStates.get(pageId) ?? { active: false, reason: "" };
@@ -587,7 +586,6 @@ function initializeNavigationAlerts() {
     navigationAlertStates.set(pageId, { active: false, reason: "" });
   });
   renderNavigationAlert("overview", false);
-  renderNavigationAlert("database", false);
 }
 
 function resetNavigationAlerts() {
@@ -596,7 +594,6 @@ function resetNavigationAlerts() {
     navigationAlertStates.set(pageId, { active: false, reason: "" });
     renderNavigationAlert(pageId, false);
   });
-  renderNavigationAlert("database", false);
   renderNavigationAlert("overview", false);
   if (alertAnnouncementTimer) clearTimeout(alertAnnouncementTimer);
   alertAnnouncementTimer = null;

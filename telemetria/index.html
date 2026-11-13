@@ -8,19 +8,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261111-3">
-  <style>
-    .dashboard-return { display:flex; align-items:center; gap:10px; padding:8px; margin-bottom:8px; border:1px solid currentColor; border-radius:6px; color:var(--text); font-size:12px; text-decoration:none; }
-    .dashboard-return:hover, .dashboard-return:focus-visible { color:var(--accent); }
-    .dashboard-return svg { width:18px; height:18px; flex:none; }
-    @media (max-width:1100px) {
-      .dashboard-return { justify-content:center; }
-      .dashboard-return span { display:none; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css?v=20261112-1">
+  <link rel="stylesheet" href="../estilos/navegacao.css">
   <link rel="stylesheet" href="../estilos/marca-equipe.css">
 </head>
 <body>
+  <header class="dashboard-header">
+    <img class="team-logo is-white" src="../imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR F&oacute;rmula">
+    <nav aria-label="Navega&ccedil;&atilde;o da Central de El&eacute;trica">
+      <ul class="topnav">
+        <li><a href="../index.html">Ferramentas</a></li>
+        <li><a href="../design/design-cost.html">Design &amp; Cost</a></li>
+        <li><a href="../inventario/index.html">Invent&aacute;rio</a></li>
+        <li><a href="index.html" aria-current="page">Telemetria</a></li>
+      </ul>
+    </nav>
+  </header>
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
@@ -28,17 +31,12 @@
           <span></span><span></span><span></span>
         </div>
         <div>
-          <img class="team-logo is-white" src="../imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR Fórmula">
           <small>TELEMETRIA-EV  AM-07</small>
           <small>By:Kawan Caetani</small>
         </div>
       </div>
 
-      <a class="dashboard-return" href="../index.html" aria-label="Voltar à Central de Elétrica" title="Voltar à Central de Elétrica">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
-        <span>Central de Elétrica</span>
-      </a>
-      <nav class="nav" aria-label="Navegação principal">
+      <nav class="nav" aria-label="Seções da telemetria">
         <button class="nav-item active" data-page="overview" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg>
           <span>Visão geral</span>
@@ -70,10 +68,6 @@
         <button class="nav-item" data-page="development" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h2v5h-2v4h2v5h-2v2H7v-2H5v-5h2v-4H5V5h2V3Zm2 2v14h6V5H9Zm-2 2v1h2V7H7Zm8 0v1h2V7h-2ZM7 16v1h2v-1H7Zm8 0v1h2v-1h-2Z"/></svg>
           <span>Monitoramento do chicote</span>
-        </button>
-        <button class="nav-item" data-page="database" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7.6 2 4 3.8 4 6v12c0 2.2 3.6 4 8 4s8-1.8 8-4V6c0-2.2-3.6-4-8-4Zm0 2c3.7 0 6 1.2 6 2s-2.3 2-6 2-6-1.2-6-2 2.3-2 6-2Zm-6 5c1.5.7 3.6 1 6 1s4.5-.3 6-1v3c0 .8-2.3 2-6 2s-6-1.2-6-2V9Zm0 6c1.5.7 3.6 1 6 1s4.5-.3 6-1v3c0 .8-2.3 2-6 2s-6-1.2-6-2v-3Z"/></svg>
-          <span>Banco de dados do carro</span>
         </button>
       </nav>
       <div class="sr-only" id="telemetryAlertAnnouncer" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -819,109 +813,6 @@
         </div>
       </section>
 
-      <section class="page" id="database">
-        <div class="section-heading inventory-heading">
-          <div><span class="section-index">09</span><h2>Estoque de componentes</h2></div>
-          <p>Cadastro local, busca rápida e levantamento instantâneo dos componentes disponíveis para o carro.</p>
-        </div>
-
-        <div class="inventory-dashboard">
-          <section class="inventory-kpis" aria-label="Resumo do estoque">
-            <article class="inventory-kpi">
-              <small>ITENS CADASTRADOS</small>
-              <strong id="inventorySkuCount">0</strong>
-              <span>modelos diferentes</span>
-            </article>
-            <article class="inventory-kpi accent">
-              <small>SALDO POR UNIDADE</small>
-              <strong id="inventoryUnitCount">0</strong>
-              <span id="inventoryUnitBreakdown">somatório em estoque</span>
-            </article>
-            <article class="inventory-kpi warning">
-              <small>REPOSIÇÃO NECESSÁRIA</small>
-              <strong id="inventoryLowCount">0</strong>
-              <span>itens no mínimo ou abaixo</span>
-            </article>
-            <article class="inventory-kpi value">
-              <small>VALOR ESTIMADO</small>
-              <strong id="inventoryValueTotal">R$ 0,00</strong>
-              <span>com base no custo informado</span>
-            </article>
-          </section>
-
-          <section class="sensor-card inventory-control-panel" aria-label="Ferramentas do estoque">
-            <div class="inventory-toolbar">
-              <label class="inventory-search" for="inventorySearch">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 20-4.7-4.7a8 8 0 1 0-1.4 1.4L20 21l1-1ZM5 10a6 6 0 1 1 12 0 6 6 0 0 1-12 0Z"/></svg>
-                <input id="inventorySearch" type="search" aria-label="Buscar componentes no estoque" placeholder="Buscar por nome, código, fabricante ou local" autocomplete="off">
-              </label>
-
-              <label class="inventory-select" for="inventoryCategoryFilter">
-                <span>TIPO</span>
-                <select id="inventoryCategoryFilter">
-                  <option value="all">Todos os tipos</option>
-                </select>
-              </label>
-
-              <label class="inventory-select" for="inventoryStockFilter">
-                <span>ESTOQUE</span>
-                <select id="inventoryStockFilter">
-                  <option value="all">Todos</option>
-                  <option value="available">Disponível</option>
-                  <option value="low">Baixo</option>
-                  <option value="out">Esgotado</option>
-                  <option value="unknown">Sem contagem</option>
-                </select>
-              </label>
-
-              <label class="inventory-select" for="inventorySort">
-                <span>ORDENAR</span>
-                <select id="inventorySort">
-                  <option value="updated">Alterados recentemente</option>
-                  <option value="name">Nome A–Z</option>
-                  <option value="quantity-desc">Maior quantidade</option>
-                  <option value="quantity-asc">Menor quantidade</option>
-                  <option value="category">Tipo de componente</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="inventory-actions">
-              <div role="group" aria-label="Importação, backup e relatórios do estoque">
-                <button class="inventory-button secondary" id="inventoryImportButton" type="button">Importar JSON</button>
-                <button class="inventory-button secondary" id="inventoryExportButton" type="button">Backup JSON</button>
-                <button class="inventory-button report" id="inventoryXlsxButton" type="button" aria-describedby="inventoryExportHelp">
-                  <span aria-hidden="true">XLSX</span> Relatório Excel
-                </button>
-                <button class="inventory-button secondary" id="inventoryCsvButton" type="button" aria-describedby="inventoryExportHelp">CSV simples</button>
-                <input id="inventoryImportInput" type="file" accept="application/json,.json" hidden>
-                <p id="inventoryExportHelp" class="sr-only">O CSV contém os dados em formato universal. O relatório Excel contém resumo, filtros, formatação e uma lista de reposição.</p>
-              </div>
-              <button class="inventory-button primary" id="inventoryAddButton" type="button">
-                <span aria-hidden="true">＋</span> Adicionar componente
-              </button>
-            </div>
-
-            <div class="inventory-result-bar">
-              <p id="inventoryResultText" aria-live="polite">Nenhum componente cadastrado</p>
-              <p><span id="inventoryCategoryCount">0</span> tipos cadastrados · <span id="inventoryStorageState">salvamento local ativo</span></p>
-            </div>
-          </section>
-
-          <section class="inventory-list" id="inventoryList" role="list" aria-label="Componentes em estoque"></section>
-
-          <section class="sensor-card inventory-empty-state" id="inventoryEmptyState">
-            <div class="inventory-empty-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64"><path d="M10 19 32 8l22 11v27L32 57 10 46V19Z"/><path d="m10 19 22 12 22-12M32 31v26M21 14l22 12"/></svg>
-            </div>
-            <small id="inventoryEmptyLabel">ESTOQUE AINDA VAZIO</small>
-            <h3 id="inventoryEmptyTitle">Cadastre o primeiro componente</h3>
-            <p id="inventoryEmptyDescription">Inclua quantidade, tipo, localização, custo, imagem e datasheet para encontrar qualquer peça rapidamente.</p>
-            <button class="inventory-button primary" id="inventoryEmptyAddButton" type="button">Adicionar primeiro componente</button>
-          </section>
-        </div>
-      </section>
-
       <footer class="footer">
         <div><span class="pulse-dot" id="footerStatusDot"></span><span id="footerConnectionText">Dados simulados atualizando a cada 500 ms</span></div>
         <div><span>ENTRADAS</span> USB SERIAL / USB RF / MQTT <b>•</b> <span>PROTOCOLO</span> JSONL + MQTT/TLS + CRC + sequência</div>
@@ -982,158 +873,6 @@
     </section>
   </div>
 
-  <div class="inventory-modal" id="inventoryModal" hidden>
-    <section class="inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventoryDialogTitle" aria-describedby="inventoryFormHint">
-      <header class="inventory-dialog-header">
-        <div>
-          <small>CONTROLE DE ESTOQUE</small>
-          <h2 id="inventoryDialogTitle">Adicionar componente</h2>
-          <p id="inventoryFormHint">Os campos marcados com * são obrigatórios.</p>
-        </div>
-        <button class="connection-close" id="inventoryClose" type="button" aria-label="Fechar cadastro">×</button>
-      </header>
-
-      <form id="inventoryForm" novalidate>
-        <input id="inventoryItemId" name="id" type="hidden">
-
-        <div class="inventory-form-layout">
-          <div class="inventory-form-fields">
-            <label class="inventory-field inventory-field-wide" for="inventoryName">
-              <span>Nome do componente *</span>
-              <input id="inventoryName" name="name" type="text" maxlength="80" required placeholder="Ex.: Conector Deutsch DT06-6S">
-            </label>
-
-            <label class="inventory-field" for="inventorySku">
-              <span>Código / part number</span>
-              <input id="inventorySku" name="sku" type="text" maxlength="40" placeholder="DT06-6S">
-            </label>
-
-            <label class="inventory-field" for="inventoryCategory">
-              <span>Tipo de componente *</span>
-              <input id="inventoryCategory" name="category" type="text" list="inventoryCategoryOptions" maxlength="50" required placeholder="Ex.: Sensor">
-              <datalist id="inventoryCategoryOptions">
-                <option value="Circuitos integrados"></option>
-                <option value="Semicondutores"></option>
-                <option value="Conversores e reguladores"></option>
-                <option value="Resistores e potenciômetros"></option>
-                <option value="Capacitores"></option>
-                <option value="Diodos e retificadores"></option>
-                <option value="Relés"></option>
-                <option value="Indutores e transformadores"></option>
-                <option value="Sensores"></option>
-                <option value="Módulos e placas"></option>
-                <option value="Conectores"></option>
-                <option value="Conectores HV"></option>
-                <option value="Terminais e crimps"></option>
-                <option value="Fusíveis e proteção"></option>
-                <option value="Botões e chaves"></option>
-                <option value="LEDs e displays"></option>
-                <option value="Motores e acionamento"></option>
-                <option value="Cabos e identificação"></option>
-                <option value="Componentes eletrônicos"></option>
-                <option value="Componentes mecânicos"></option>
-                <option value="Fixadores"></option>
-                <option value="Consumível"></option>
-                <option value="Ferramenta"></option>
-                <option value="Outro"></option>
-              </datalist>
-            </label>
-
-            <label class="inventory-field" for="inventoryQuantity">
-              <span>Quantidade atual</span>
-              <input id="inventoryQuantity" name="quantity" type="number" min="0" max="1000000000" step="0.01" placeholder="Vazio = sem contagem">
-            </label>
-
-            <label class="inventory-field" for="inventoryUnit">
-              <span>Unidade *</span>
-              <select id="inventoryUnit" name="unit" required>
-                <option value="un">unidade</option>
-                <option value="par">par</option>
-                <option value="kit">kit</option>
-                <option value="m">metro</option>
-                <option value="cm">centímetro</option>
-                <option value="rolo">rolo</option>
-                <option value="caixa">caixa</option>
-              </select>
-            </label>
-
-            <label class="inventory-field" for="inventoryMinimum">
-              <span>Estoque mínimo</span>
-              <input id="inventoryMinimum" name="minimum" type="number" min="0" max="1000000000" step="0.01" placeholder="Vazio = não informado">
-            </label>
-
-            <label class="inventory-low-stock-field inventory-field-wide" for="inventoryLowStockOverride">
-              <input id="inventoryLowStockOverride" name="lowStockOverride" type="checkbox">
-              <span>
-                <strong>Marcar manualmente como estoque baixo</strong>
-                <small>Use quando a origem indicar baixa sem informar um estoque mínimo. Desmarque após a reposição ou contagem.</small>
-              </span>
-            </label>
-
-            <label class="inventory-field" for="inventoryUnitCost">
-              <span>Custo unitário (R$)</span>
-              <input id="inventoryUnitCost" name="unitCost" type="number" min="0" max="1000000000" step="0.01" placeholder="0,00">
-            </label>
-
-            <label class="inventory-field" for="inventoryManufacturer">
-              <span>Fabricante</span>
-              <input id="inventoryManufacturer" name="manufacturer" type="text" maxlength="60" placeholder="Ex.: TE Connectivity">
-            </label>
-
-            <label class="inventory-field" for="inventoryLocation">
-              <span>Localização física</span>
-              <input id="inventoryLocation" name="location" type="text" maxlength="60" placeholder="Ex.: Armário A · Gaveta 03">
-            </label>
-
-            <label class="inventory-field inventory-field-wide" for="inventoryNotes">
-              <span>Observações</span>
-              <textarea id="inventoryNotes" name="notes" maxlength="500" rows="3" placeholder="Aplicação, fornecedor, compatibilidade ou qualquer detalhe útil"></textarea>
-            </label>
-          </div>
-
-          <aside class="inventory-asset-panel">
-            <section class="inventory-image-field">
-              <span>Imagem do componente</span>
-              <div class="inventory-image-preview" id="inventoryImagePreview" data-empty="true">
-                <img id="inventoryPreviewImage" alt="Pré-visualização do componente" hidden>
-                <svg id="inventoryPreviewPlaceholder" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 15h44v34H10z"/><circle cx="23" cy="27" r="5"/><path d="m14 44 12-11 8 7 7-8 9 12"/></svg>
-              </div>
-              <button class="inventory-file-button" id="inventoryChooseImage" type="button">Escolher imagem</button>
-              <input id="inventoryImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-              <button class="inventory-remove-image" id="inventoryRemoveImage" type="button" hidden>Remover imagem</button>
-              <small id="inventoryImageStatus">PNG, JPG ou WebP. A imagem será reduzida para economizar espaço.</small>
-            </section>
-
-            <section class="inventory-datasheet-field" aria-labelledby="inventoryDatasheetLabel">
-              <span id="inventoryDatasheetLabel">Datasheet do componente</span>
-              <div class="inventory-datasheet-summary" id="inventoryDatasheetSummary" data-empty="true">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h8l4 4v16H6V2Z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></svg>
-                <div>
-                  <strong id="inventoryDatasheetName">Sem PDF anexado</strong>
-                  <small id="inventoryDatasheetStatus" role="status" aria-live="polite">PDF de até 10 MB</small>
-                </div>
-              </div>
-              <div class="inventory-datasheet-actions">
-                <button class="inventory-file-button" id="inventoryChooseDatasheet" type="button">Anexar PDF</button>
-                <input id="inventoryDatasheetInput" type="file" accept="application/pdf,.pdf" hidden>
-                <button class="inventory-remove-image" id="inventoryRemoveDatasheet" type="button" hidden>Remover PDF</button>
-              </div>
-              <label class="inventory-datasheet-url" for="inventoryDatasheetUrl">
-                <span>OU LINK DO FABRICANTE</span>
-                <input id="inventoryDatasheetUrl" name="datasheetUrl" type="url" maxlength="500" inputmode="url" placeholder="https://fabricante.com/datasheet.pdf">
-              </label>
-            </section>
-          </aside>
-        </div>
-
-        <div class="inventory-dialog-actions">
-          <button class="inventory-button secondary" id="inventoryCancel" type="button">Cancelar</button>
-          <button class="inventory-button primary" id="inventorySave" type="submit">Salvar componente</button>
-        </div>
-      </form>
-    </section>
-  </div>
-
   <script type="application/json" id="telemetryProtocol">
     {
       "version": "0.4-prototype",
@@ -1168,11 +907,8 @@
       "payloadGroups": ["ev", "suspension", "tires", "imu", "chassis_strain", "brakes", "bearing_vibration", "harness_voltage"]
     }
   </script>
-  <script src="vendor/exceljs.min.js?v=4.4.0"></script>
   <script src="inverter-demo.js?v=20261111-3"></script>
   <script src="inverter.js?v=20261111-3"></script>
   <script src="app.js?v=20261111-4"></script>
-  <script src="inventory-seed.js?v=20260822-1"></script>
-  <script src="inventory.js?v=20260822-1"></script>
 </body>
 </html>

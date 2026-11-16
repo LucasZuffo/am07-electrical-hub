@@ -102,6 +102,94 @@
   let modalTrigger = elements.add;
   let searchTimer = null;
   let pendingExternalInventoryUpdate = false;
+  const cloudConfig = window.AM07_INVENTORY_CLOUD;
+  const cloudEnabled = Boolean(cloudConfig?.url || cloudConfig?.publishableKey);
+  const stagedAttachments = new Map();
+  let cloudReady = false;
+  let cloudBusy = false;
+
+  async function cloudRpc(name, parameters) {
+    const url = new URL("/rest/v1/rpc/am07_inventory_" + name, cloudConfig.url);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { apikey: cloudConfig.publishableKey, "Content-Type": "application/json" },
+      body: JSON.stringify(parameters ?? {}),
+      signal: AbortSignal.timeout(30000)
+    });
+    const data = await response.json();
+    if (!response.ok) throw Object.assign(new Error(data.message), { code: data.code });
+    return data;
+  }
+
+  function loadCloudDocument(documentValue) {
+    const loaded = parseInventoryDocument(documentValue);
+    items = loaded.items;
+    revision = loaded.revision;
+  }
+
+  async function runCloudMutation(operation) {
+    if (!cloudEnabled) return operation();
+    if (!cloudReady || cloudBusy) return;
+    cloudBusy = true;
+    try {
+      return await operation();
+    } finally {
+      stagedAttachments.clear();
+      cloudBusy = false;
+    }
+  }
+
+  async function refreshCloudInventory() {
+    if (!cloudReady || cloudBusy || !elements.modal.hidden) return;
+    cloudBusy = true;
+    try {
+      const result = await cloudRpc("read");
+      if (result.revision !== revision) {
+        loadCloudDocument(result);
+        renderInventory();
+      }
+    } catch (error) {
+      console.warn("Falha ao consultar o estoque compartilhado:", error);
+    } finally {
+      cloudBusy = false;
+    }
+  }
+
+  async function startCloudInventory() {
+    const panel = document.getElementById("inventoryCloud");
+    const page = document.getElementById("inventoryPage");
+    const status = document.getElementById("inventoryCloudStatus");
+    panel.hidden = false;
+    page.hidden = true;
+    status.textContent = "Carregando estoque compartilhado…";
+
+    try {
+      loadCloudDocument(await cloudRpc("read"));
+      if (revision === 0) {
+        const seed = window.UFPR_FORMULA_INVENTORY_SEED?.items ?? [];
+        const initialItems = parseInventoryDocument({ schemaVersion: SCHEMA_VERSION, items: seed }).items;
+        try {
+          loadCloudDocument(await cloudRpc("write", {
+            p_revision: 0, p_items: initialItems, p_attachments: []
+          }));
+        } catch (error) {
+          if (error.code !== "40001") throw error;
+          loadCloudDocument(await cloudRpc("read"));
+        }
+      }
+      cloudReady = true;
+      renderInventory();
+      panel.hidden = true;
+      page.hidden = false;
+      window.addEventListener("focus", refreshCloudInventory);
+      window.setInterval(() => {
+        if (!document.hidden) refreshCloudInventory();
+      }, 15000);
+    } catch (error) {
+      status.textContent = "Não foi possível carregar o estoque compartilhado. Recarregue a página para tentar novamente.";
+      console.error(error);
+    }
+  }
 
   function notify(message) {
     if (typeof window.showToast === "function") {
@@ -290,7 +378,30 @@
     }
   }
 
+  async function saveInventory(nextItems) {
+    if (!cloudEnabled) return persistInventory(nextItems);
+    try {
+      loadCloudDocument(await cloudRpc("write", {
+        p_revision: revision, p_items: nextItems, p_attachments: [...stagedAttachments.values()]
+      }));
+      return true;
+    } catch (error) {
+      console.error("Falha ao gravar o estoque compartilhado:", error);
+      if (error.code === "40001" && !elements.modal.hidden) {
+        pendingExternalInventoryUpdate = true;
+      }
+      notify(error.code === "40001"
+        ? "O estoque mudou em outro dispositivo. Atualize a página ou reabra o formulário antes de repetir."
+        : "Não foi possível confirmar o salvamento. Confira o estoque antes de repetir a operação.");
+      return false;
+    }
+  }
+
   function updateStorageState() {
+    if (cloudEnabled) {
+      elements.storageState.textContent = "estoque compartilhado";
+      return;
+    }
     const messages = [];
     if (storageAvailable) messages.push("salvo neste navegador");
     else messages.push("metadados sem persistência");
@@ -347,14 +458,23 @@
   }
 
   function getImage(id) {
+    if (cloudEnabled) return cloudRpc("attachment", { p_id: id, p_kind: "image" }).then((data) => dataUrlToBlob(data?.data));
     return imageStoreOperation("readonly", (store) => store.get(id)).then((record) => record?.blob ?? null);
   }
 
-  function putImage(id, blob) {
+  async function putImage(id, blob) {
+    if (cloudEnabled) {
+      stagedAttachments.set(JSON.stringify([id, "image"]), { id, kind: "image", payload: { data: await blobToDataUrl(blob) } });
+      return;
+    }
     return imageStoreOperation("readwrite", (store) => store.put({ id, blob, updatedAt: new Date().toISOString() }));
   }
 
   function deleteImage(id) {
+    if (cloudEnabled) {
+      stagedAttachments.set(JSON.stringify([id, "image"]), { id, kind: "image", payload: null });
+      return Promise.resolve();
+    }
     return imageStoreOperation("readwrite", (store) => store.delete(id));
   }
 
@@ -363,11 +483,23 @@
   }
 
   function getDatasheet(id) {
+    if (cloudEnabled) {
+      return cloudRpc("attachment", { p_id: id, p_kind: "datasheet" }).then((data) => {
+        const decoded = dataUrlToDatasheet(data);
+        return decoded ? { blob: decoded.blob, ...decoded.metadata } : null;
+      });
+    }
     return imageStoreOperation("readonly", (store) => store.get(datasheetStorageKey(id)))
       .then((record) => record?.blob ? record : null);
   }
 
-  function putDatasheet(id, blob, metadata = {}) {
+  async function putDatasheet(id, blob, metadata = {}) {
+    if (cloudEnabled) {
+      stagedAttachments.set(JSON.stringify([id, "datasheet"]), {
+        id, kind: "datasheet", payload: { data: await blobToDataUrl(blob), fileName: metadata.fileName }
+      });
+      return;
+    }
     return imageStoreOperation("readwrite", (store) => store.put({
       id: datasheetStorageKey(id),
       blob,
@@ -379,6 +511,10 @@
   }
 
   function deleteDatasheet(id) {
+    if (cloudEnabled) {
+      stagedAttachments.set(JSON.stringify([id, "datasheet"]), { id, kind: "datasheet", payload: null });
+      return Promise.resolve();
+    }
     return imageStoreOperation("readwrite", (store) => store.delete(datasheetStorageKey(id)));
   }
 
@@ -802,6 +938,7 @@
   }
 
   async function openInventoryModal(id = null, trigger = null) {
+    if (cloudEnabled && (!cloudReady || cloudBusy)) return;
     modalTrigger = trigger ?? document.activeElement ?? elements.add;
     elements.form.reset();
     elements.id.value = "";
@@ -864,6 +1001,7 @@
   }
 
   function closeInventoryModal(options = {}) {
+    if (cloudEnabled && cloudBusy && options?.restoreFocus !== false) return;
     const restoreFocus = options?.restoreFocus !== false;
     const reloadExternalUpdate = pendingExternalInventoryUpdate;
     pendingExternalInventoryUpdate = false;
@@ -879,6 +1017,10 @@
     elements.save.disabled = false;
     if (restoreFocus && modalTrigger instanceof HTMLElement) modalTrigger.focus();
     if (reloadExternalUpdate) {
+      if (cloudEnabled) {
+        refreshCloudInventory();
+        return;
+      }
       items = [];
       readInventory();
       renderInventory();
@@ -1038,6 +1180,7 @@
     let datasheetChanged = false;
 
     const rollbackAssets = async () => {
+      if (cloudEnabled) return;
       try {
         if (imageChanged) {
           if (previousImage instanceof Blob) await putImage(item.id, previousImage);
@@ -1053,8 +1196,8 @@
     };
 
     try {
-      if (imageChangeRequested && current?.hasImage) previousImage = await getImage(item.id);
-      if (datasheetChangeRequested && current?.hasDatasheet) previousDatasheet = await getDatasheet(item.id);
+      if (!cloudEnabled && imageChangeRequested && current?.hasImage) previousImage = await getImage(item.id);
+      if (!cloudEnabled && datasheetChangeRequested && current?.hasDatasheet) previousDatasheet = await getDatasheet(item.id);
       if (draftImageBlob instanceof Blob) {
         await putImage(item.id, draftImageBlob);
         imageChanged = true;
@@ -1088,7 +1231,7 @@
       ? items.map((candidate) => candidate.id === item.id ? item : candidate)
       : [item, ...items];
 
-    if (!persistInventory(nextItems)) {
+    if (!await saveInventory(nextItems)) {
       await rollbackAssets();
       elements.save.disabled = false;
       return;
@@ -1103,7 +1246,7 @@
     notify(current ? "Componente atualizado." : "Componente adicionado ao estoque.");
   }
 
-  function adjustQuantity(id, delta) {
+  async function adjustQuantity(id, delta) {
     const item = items.find((candidate) => candidate.id === id);
     if (!item) return;
     if (item.quantityKnown === false && delta < 0) return;
@@ -1114,7 +1257,19 @@
     const nextItems = items.map((candidate) => candidate.id === id
       ? { ...candidate, quantity, quantityKnown: true, updatedAt: new Date().toISOString() }
       : candidate);
-    if (persistInventory(nextItems)) {
+    let saved;
+    if (cloudEnabled) {
+      try {
+        loadCloudDocument(await cloudRpc("adjust", { p_id: id, p_delta: delta }));
+        saved = true;
+      } catch (error) {
+        console.error(error);
+        notify("Não foi possível confirmar o ajuste. Confira a quantidade antes de repetir.");
+      }
+    } else {
+      saved = persistInventory(nextItems);
+    }
+    if (saved) {
       renderInventory();
       requestAnimationFrame(() => {
         elements.list.querySelector(`[data-inventory-id="${CSS.escape(id)}"] [data-action="${action}"]`)?.focus();
@@ -1187,7 +1342,12 @@
     if (!item) return;
     if (!window.confirm(`Excluir “${item.name}” do estoque? Esta ação não pode ser desfeita.`)) return;
     const nextItems = items.filter((candidate) => candidate.id !== id);
-    if (!persistInventory(nextItems)) return;
+    if (!await saveInventory(nextItems)) return;
+    if (cloudEnabled) {
+      renderInventory();
+      notify("Componente e anexos excluídos do estoque.");
+      return;
+    }
     let cleanupFailed = false;
     const cleanupOperations = [];
     if (item.hasImage) cleanupOperations.push({ label: "imagem", run: () => deleteImage(id) });
@@ -1829,7 +1989,7 @@
       let recordsToApply;
       if (replace) {
         try {
-          localStorage.setItem(BACKUP_KEY, JSON.stringify({
+          if (!cloudEnabled) localStorage.setItem(BACKUP_KEY, JSON.stringify({
             format: EXPORT_FORMAT,
             schemaVersion: SCHEMA_VERSION,
             revision,
@@ -1924,7 +2084,7 @@
 
       const appliedItems = appliedRecords.map((record) => record.item);
       const nextItems = replace ? appliedItems : [...items, ...appliedItems];
-      if (!persistInventory(nextItems)) {
+      if (!await saveInventory(nextItems)) {
         await Promise.all(stagedImageIds.map((id) => deleteImage(id).catch(() => {})));
         await Promise.all(stagedDatasheetIds.map((id) => deleteDatasheet(id).catch(() => {})));
         return;
@@ -1947,7 +2107,10 @@
   });
   elements.close.addEventListener("click", closeInventoryModal);
   elements.cancel.addEventListener("click", closeInventoryModal);
-  elements.form.addEventListener("submit", saveForm);
+  elements.form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    runCloudMutation(() => saveForm(event));
+  });
 
   elements.search.addEventListener("input", () => {
     clearTimeout(searchTimer);
@@ -1962,11 +2125,11 @@
     const card = event.target.closest("[data-inventory-id]");
     if (!button || !card) return;
     const id = card.dataset.inventoryId;
-    if (button.dataset.action === "increment") adjustQuantity(id, 1);
-    if (button.dataset.action === "decrement") adjustQuantity(id, -1);
+    if (button.dataset.action === "increment") runCloudMutation(() => adjustQuantity(id, 1));
+    if (button.dataset.action === "decrement") runCloudMutation(() => adjustQuantity(id, -1));
     if (button.dataset.action === "datasheet") openDatasheet(id);
     if (button.dataset.action === "edit") openInventoryModal(id, button);
-    if (button.dataset.action === "delete") removeItem(id);
+    if (button.dataset.action === "delete") runCloudMutation(() => removeItem(id));
   });
 
   elements.imageInput.addEventListener("change", async () => {
@@ -2034,7 +2197,7 @@
   elements.chooseImage.addEventListener("click", () => elements.imageInput.click());
   elements.chooseDatasheet.addEventListener("click", () => elements.datasheetInput.click());
   elements.importButton.addEventListener("click", () => elements.importInput.click());
-  elements.importInput.addEventListener("change", () => importJson(elements.importInput.files[0]));
+  elements.importInput.addEventListener("change", () => runCloudMutation(() => importJson(elements.importInput.files[0])));
   elements.exportButton.addEventListener("click", exportJson);
   elements.xlsxButton?.addEventListener("click", exportXlsx);
   elements.csvButton.addEventListener("click", exportCsv);
@@ -2064,7 +2227,7 @@
   });
 
   window.addEventListener("storage", (event) => {
-    if (event.key !== STORAGE_KEY || event.newValue === event.oldValue) return;
+    if (cloudEnabled || event.key !== STORAGE_KEY || event.newValue === event.oldValue) return;
     if (!elements.modal.hidden) {
       pendingExternalInventoryUpdate = true;
       elements.save.disabled = true;
@@ -2081,6 +2244,11 @@
     releaseCardImages();
     releaseDraftPreview();
   });
+
+  if (cloudEnabled) {
+    startCloudInventory();
+    return;
+  }
 
   readInventory();
   const seededItems = applyBundledInventorySeed();

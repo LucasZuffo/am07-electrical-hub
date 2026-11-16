@@ -56,6 +56,8 @@ button { font: inherit; }
 }
 .toast.show { transform: translateY(0); opacity: 1; }
 .inventory-dashboard { display: grid; gap: 14px; padding-bottom: 24px; }
+.inventory-cloud { margin-bottom: 14px; padding: 16px; }
+.inventory-cloud p { margin: 0; color: var(--muted); font-size: .875rem; }
 .inventory-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .inventory-kpi {
   min-height: 124px;

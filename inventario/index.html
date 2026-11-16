@@ -30,7 +30,10 @@
       <h1>Invent&aacute;rio de componentes</h1>
       <p>Cadastro local, busca r&aacute;pida e levantamento dos componentes dispon&iacute;veis para o AM-07.</p>
     </header>
-      <section class="inventory-page">
+      <section class="sensor-card inventory-cloud" id="inventoryCloud" hidden aria-label="Inventário compartilhado">
+        <p id="inventoryCloudStatus" role="status"></p>
+      </section>
+      <section class="inventory-page" id="inventoryPage">
         <div class="inventory-dashboard">
           <section class="inventory-kpis" aria-label="Resumo do estoque">
             <article class="inventory-kpi">
@@ -282,6 +285,7 @@
   </div>
   <script src="vendor/exceljs.min.js?v=4.4.0"></script>
   <script src="inventory-seed.js?v=20260822-1"></script>
-  <script src="inventory.js?v=20260822-1"></script>
+  <script src="cloud-config.js"></script>
+  <script src="inventory.js?v=20261116-cloud"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 begin;
 
+set local lock_timeout = '5s';
+
 create schema if not exists inventory_private;
 revoke all on schema inventory_private from public, anon, authenticated;
 
@@ -12,10 +14,24 @@ insert into inventory_private.stock (singleton) values (true) on conflict do not
 
 create table if not exists inventory_private.attachments (
   item_id text not null,
-  kind text not null check (kind in ('image', 'datasheet')),
+  kind text not null check (kind = 'datasheet'),
   payload jsonb not null,
   primary key (item_id, kind)
 );
+
+-- Remove legacy catalog images when this script is applied to an existing inventory.
+lock table inventory_private.stock in exclusive mode;
+
+update inventory_private.stock
+set items = (
+  select jsonb_agg(value - 'hasImage' order by ordinality)
+  from jsonb_array_elements(items) with ordinality
+), revision = revision + 1
+where exists (select 1 from jsonb_array_elements(items) as i where i ? 'hasImage');
+
+delete from inventory_private.attachments where kind = 'image';
+alter table inventory_private.attachments drop constraint if exists attachments_kind_check;
+alter table inventory_private.attachments add constraint attachments_kind_check check (kind = 'datasheet');
 
 create or replace function public.am07_inventory_read()
 returns jsonb language plpgsql security definer set search_path = '' as $$
@@ -28,7 +44,8 @@ $$;
 create or replace function public.am07_inventory_attachment(p_id text, p_kind text)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 begin
-  return (select payload from inventory_private.attachments where item_id = p_id and kind = p_kind);
+  return (select payload from inventory_private.attachments
+          where item_id = p_id and kind = 'datasheet' and kind = p_kind);
 end;
 $$;
 
@@ -56,16 +73,15 @@ begin
   end if;
 
   for attachment in select value from jsonb_array_elements(p_attachments) loop
+    if attachment->>'kind' is distinct from 'datasheet' then
+      raise exception 'Somente datasheets em PDF são aceitos';
+    end if;
     if attachment->'payload' is null or attachment->'payload' = 'null'::jsonb then
       delete from inventory_private.attachments
         where item_id = attachment->>'id' and kind = attachment->>'kind';
     else
-      if not (case attachment->>'kind'
-        when 'image' then coalesce(attachment->'payload'->>'data' ~ '^data:image/(png|jpeg|webp);base64,'
-                         and length(attachment->'payload'->>'data') <= 887500, false)
-        when 'datasheet' then coalesce(attachment->'payload'->>'data' ~ '^data:application/pdf;base64,'
-                             and length(attachment->'payload'->>'data') <= 13981100, false)
-        else false end) then
+      if not coalesce(attachment->'payload'->>'data' ~ '^data:application/pdf;base64,'
+                     and length(attachment->'payload'->>'data') <= 13981100, false) then
         raise exception 'Anexo inválido';
       end if;
       insert into inventory_private.attachments (item_id, kind, payload)
@@ -78,7 +94,7 @@ begin
     where not exists (
       select 1 from jsonb_array_elements(p_items) as i
       where i->>'id' = a.item_id
-        and (case a.kind when 'image' then i->>'hasImage' else i->>'hasDatasheet' end) = 'true'
+        and i->>'hasDatasheet' = 'true'
     );
   return public.am07_inventory_read();
 end;
@@ -93,7 +109,7 @@ declare
   quantity numeric;
 begin
   if p_delta is null or p_delta not in (-1, 1) then raise exception 'Ajuste inválido'; end if;
-  select items into current_items from inventory_private.stock for update;
+  select items into current_items from inventory_private.stock where singleton = true for update;
   select value, (ordinality - 1)::integer into current_item, item_index
     from jsonb_array_elements(current_items) with ordinality where value->>'id' = p_id;
   if not found then raise exception 'Componente excluído em outro dispositivo' using errcode = '40001'; end if;
@@ -107,7 +123,8 @@ begin
     'quantity', quantity, 'quantityKnown', true, 'updatedAt', clock_timestamp()
   );
   update inventory_private.stock
-    set items = jsonb_set(current_items, array[item_index::text], current_item), revision = revision + 1;
+    set items = jsonb_set(current_items, array[item_index::text], current_item), revision = revision + 1
+    where singleton = true;
   return public.am07_inventory_read();
 end;
 $$;

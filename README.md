@@ -19,7 +19,7 @@ O inventário usa o navegador enquanto a URL e a chave publicável estiverem vaz
 3. Preencha `inventario/cloud-config.js` com o **Project URL** e a **Publishable key** (prefixo `sb_publishable_`) do diálogo **Connect**. Esses dois valores podem ser publicados no GitHub Pages. Guarde as chaves secretas e a senha do banco no Supabase.
 4. Publique o site e abra a página **Inventário**. O primeiro acesso carrega os componentes iniciais. Use **Importar JSON** para migrar seus backups. A opção de adicionar itens novos ignora itens que já existem. Para migrar também alterações de quantidade ou anexos de itens existentes, use como base o backup completo do navegador que tem o estoque correto e confirme a substituição.
 
-O estoque é consultado ao voltar para a página e a cada 15 segundos enquanto ela está visível. Ajustes pelos botões de quantidade são aplicados no banco, e formulários ou importações com uma revisão antiga recebem um aviso de conflito. Qualquer pessoa com acesso ao site pode consultar e editar o inventário, inclusive baixar anexos e excluir componentes. Para atualizar um projeto existente, execute novamente o SQL do passo 2. O script preserva o estoque existente.
+O estoque é consultado ao voltar para a página e a cada 15 segundos enquanto ela está visível. Ajustes pelos botões de quantidade são aplicados no banco, e formulários ou importações com uma revisão antiga recebem um aviso de conflito. Qualquer pessoa com acesso ao site pode consultar e editar o inventário, inclusive baixar fichas técnicas e excluir componentes. Para atualizar um projeto existente, execute novamente o SQL do passo 2. O script apaga as fotos antigas do catálogo no Supabase e preserva os componentes, saldos e datasheets em PDF.
 
 ## Organização
 

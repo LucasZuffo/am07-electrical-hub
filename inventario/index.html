@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Oswald:wght@500;600;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../estilos/navegacao.css">
   <link rel="stylesheet" href="../estilos/marca-equipe.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261116-sem-imagens">
 </head>
 <body>
   <header class="dashboard-header">
@@ -28,41 +28,26 @@
     <header class="inventory-heading">
       <p class="inventory-vehicle">AM-07</p>
       <h1>Invent&aacute;rio de componentes</h1>
-      <p>Cadastro local, busca r&aacute;pida e levantamento dos componentes dispon&iacute;veis para o AM-07.</p>
     </header>
       <section class="sensor-card inventory-cloud" id="inventoryCloud" hidden aria-label="Inventário compartilhado">
         <p id="inventoryCloudStatus" role="status"></p>
       </section>
       <section class="inventory-page" id="inventoryPage">
         <div class="inventory-dashboard">
-          <section class="inventory-kpis" aria-label="Resumo do estoque">
-            <article class="inventory-kpi">
-              <small>ITENS CADASTRADOS</small>
-              <strong id="inventorySkuCount">0</strong>
-              <span>modelos diferentes</span>
-            </article>
-            <article class="inventory-kpi accent">
-              <small>SALDO POR UNIDADE</small>
-              <strong id="inventoryUnitCount">0</strong>
-              <span id="inventoryUnitBreakdown">somatório em estoque</span>
-            </article>
-            <article class="inventory-kpi warning">
-              <small>REPOSIÇÃO NECESSÁRIA</small>
-              <strong id="inventoryLowCount">0</strong>
-              <span>itens no mínimo ou abaixo</span>
-            </article>
-            <article class="inventory-kpi value">
-              <small>VALOR ESTIMADO</small>
-              <strong id="inventoryValueTotal">R$ 0,00</strong>
-              <span>com base no custo informado</span>
-            </article>
+          <section class="inventory-primary-actions" aria-label="Movimentar estoque">
+            <button class="inventory-button primary" id="inventoryAddButton" type="button">
+              <span aria-hidden="true">+</span> Adicionar item
+            </button>
+            <button class="inventory-button withdraw" id="inventoryWithdrawButton" type="button">
+              <span aria-hidden="true">−</span> Remover item
+            </button>
           </section>
 
           <section class="sensor-card inventory-control-panel" aria-label="Ferramentas do estoque">
             <div class="inventory-toolbar">
               <label class="inventory-search" for="inventorySearch">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 20-4.7-4.7a8 8 0 1 0-1.4 1.4L20 21l1-1ZM5 10a6 6 0 1 1 12 0 6 6 0 0 1-12 0Z"/></svg>
-                <input id="inventorySearch" type="search" aria-label="Buscar componentes no estoque" placeholder="Buscar por nome, código, fabricante ou local" autocomplete="off">
+                <input id="inventorySearch" type="search" aria-label="Buscar componentes no estoque" placeholder="Buscar no estoque" autocomplete="off">
               </label>
 
               <label class="inventory-select" for="inventoryCategoryFilter">
@@ -95,7 +80,8 @@
               </label>
             </div>
 
-            <div class="inventory-actions">
+            <details class="inventory-options">
+              <summary>Mais opções</summary>
               <div role="group" aria-label="Importação, backup e relatórios do estoque">
                 <button class="inventory-button secondary" id="inventoryImportButton" type="button">Importar JSON</button>
                 <button class="inventory-button secondary" id="inventoryExportButton" type="button">Backup JSON</button>
@@ -106,10 +92,7 @@
                 <input id="inventoryImportInput" type="file" accept="application/json,.json" hidden>
                 <p id="inventoryExportHelp" class="sr-only">O CSV contém os dados em formato universal. O relatório Excel contém resumo, filtros, formatação e uma lista de reposição.</p>
               </div>
-              <button class="inventory-button primary" id="inventoryAddButton" type="button">
-                <span aria-hidden="true">＋</span> Adicionar componente
-              </button>
-            </div>
+            </details>
 
             <div class="inventory-result-bar">
               <p id="inventoryResultText" aria-live="polite">Nenhum componente cadastrado</p>
@@ -125,8 +108,30 @@
             </div>
             <small id="inventoryEmptyLabel">ESTOQUE AINDA VAZIO</small>
             <h3 id="inventoryEmptyTitle">Cadastre o primeiro componente</h3>
-            <p id="inventoryEmptyDescription">Inclua quantidade, tipo, localização, custo, imagem e datasheet para encontrar qualquer peça rapidamente.</p>
+            <p id="inventoryEmptyDescription">Inclua quantidade, tipo, localização, custo e datasheet para encontrar qualquer peça rapidamente.</p>
             <button class="inventory-button primary" id="inventoryEmptyAddButton" type="button">Adicionar primeiro componente</button>
+          </section>
+          <section class="inventory-kpis" aria-label="Resumo do estoque">
+            <article class="inventory-kpi">
+              <small>ITENS CADASTRADOS</small>
+              <strong id="inventorySkuCount">0</strong>
+              <span>modelos diferentes</span>
+            </article>
+            <article class="inventory-kpi accent">
+              <small>SALDO POR UNIDADE</small>
+              <strong id="inventoryUnitCount">0</strong>
+              <span id="inventoryUnitBreakdown">somatório em estoque</span>
+            </article>
+            <article class="inventory-kpi warning">
+              <small>REPOSIÇÃO NECESSÁRIA</small>
+              <strong id="inventoryLowCount">0</strong>
+              <span>itens no mínimo ou abaixo</span>
+            </article>
+            <article class="inventory-kpi value">
+              <small>VALOR ESTIMADO</small>
+              <strong id="inventoryValueTotal">R$ 0,00</strong>
+              <span>com base no custo informado</span>
+            </article>
           </section>
         </div>
       </section>
@@ -140,8 +145,27 @@
           <h2 id="inventoryDialogTitle">Adicionar componente</h2>
           <p id="inventoryFormHint">Os campos marcados com * são obrigatórios.</p>
         </div>
-        <button class="connection-close" id="inventoryClose" type="button" aria-label="Fechar cadastro">×</button>
+        <button class="connection-close" id="inventoryClose" type="button" aria-label="Fechar">×</button>
       </header>
+
+      <form id="inventoryMovementForm" hidden>
+        <label class="inventory-field" for="inventoryMovementSearch">
+          <span>Componente</span>
+          <input id="inventoryMovementSearch" type="search" placeholder="Busque por nome ou código" autocomplete="off">
+        </label>
+        <div id="inventoryMovementResults" class="inventory-match-list"></div>
+        <p id="inventoryMovementStatus" class="inventory-match-status" role="status"></p>
+        <div id="inventoryMovementAmount" hidden>
+          <label class="inventory-field" for="inventoryMovementQuantity">
+            <span id="inventoryMovementLabel">Quantidade</span>
+            <input id="inventoryMovementQuantity" type="number" min="0.01" max="1000000000" step="0.01" inputmode="decimal" aria-describedby="inventoryMovementStatus" required>
+          </label>
+        </div>
+        <div class="inventory-dialog-actions">
+          <button class="inventory-button secondary" id="inventoryNewItem" type="button">Cadastrar novo item</button>
+          <button class="inventory-button primary" id="inventoryMovementSave" type="submit" hidden>Adicionar quantidade</button>
+        </div>
+      </form>
 
       <form id="inventoryForm" novalidate>
         <input id="inventoryItemId" name="id" type="hidden">
@@ -152,6 +176,11 @@
               <span>Nome do componente *</span>
               <input id="inventoryName" name="name" type="text" maxlength="80" required placeholder="Ex.: Conector Deutsch DT06-6S">
             </label>
+
+            <div id="inventorySimilarItems" class="inventory-similar inventory-field-wide" hidden>
+              <p>Já existe um item parecido. Selecione-o para adicionar ao saldo.</p>
+              <div id="inventorySimilarResults" class="inventory-match-list"></div>
+            </div>
 
             <label class="inventory-field" for="inventorySku">
               <span>Código / part number</span>
@@ -242,18 +271,6 @@
           </div>
 
           <aside class="inventory-asset-panel">
-            <section class="inventory-image-field">
-              <span>Imagem do componente</span>
-              <div class="inventory-image-preview" id="inventoryImagePreview" data-empty="true">
-                <img id="inventoryPreviewImage" alt="Pré-visualização do componente" hidden>
-                <svg id="inventoryPreviewPlaceholder" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 15h44v34H10z"/><circle cx="23" cy="27" r="5"/><path d="m14 44 12-11 8 7 7-8 9 12"/></svg>
-              </div>
-              <button class="inventory-file-button" id="inventoryChooseImage" type="button">Escolher imagem</button>
-              <input id="inventoryImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-              <button class="inventory-remove-image" id="inventoryRemoveImage" type="button" hidden>Remover imagem</button>
-              <small id="inventoryImageStatus">PNG, JPG ou WebP. A imagem será reduzida para economizar espaço.</small>
-            </section>
-
             <section class="inventory-datasheet-field" aria-labelledby="inventoryDatasheetLabel">
               <span id="inventoryDatasheetLabel">Datasheet do componente</span>
               <div class="inventory-datasheet-summary" id="inventoryDatasheetSummary" data-empty="true">
@@ -266,7 +283,7 @@
               <div class="inventory-datasheet-actions">
                 <button class="inventory-file-button" id="inventoryChooseDatasheet" type="button">Anexar PDF</button>
                 <input id="inventoryDatasheetInput" type="file" accept="application/pdf,.pdf" hidden>
-                <button class="inventory-remove-image" id="inventoryRemoveDatasheet" type="button" hidden>Remover PDF</button>
+                <button class="inventory-remove-datasheet" id="inventoryRemoveDatasheet" type="button" hidden>Remover PDF</button>
               </div>
               <label class="inventory-datasheet-url" for="inventoryDatasheetUrl">
                 <span>OU LINK DO FABRICANTE</span>
@@ -286,6 +303,6 @@
   <script src="vendor/exceljs.min.js?v=4.4.0"></script>
   <script src="inventory-seed.js?v=20260822-1"></script>
   <script src="cloud-config.js"></script>
-  <script src="inventory.js?v=20261116-cloud"></script>
+  <script src="inventory.js?v=20261116-retorno-supabase"></script>
 </body>
 </html>

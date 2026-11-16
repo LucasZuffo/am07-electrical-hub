@@ -8,11 +8,9 @@
   const SUPPORTED_SCHEMA_VERSIONS = new Set([1, 2, SCHEMA_VERSION]);
   const MAX_ITEMS = 2000;
   const MAX_IMPORT_BYTES = 50 * 1024 * 1024;
-  const MAX_SOURCE_IMAGE_BYTES = 8 * 1024 * 1024;
-  const MAX_STORED_IMAGE_BYTES = 650 * 1024;
   const MAX_DATASHEET_BYTES = 10 * 1024 * 1024;
-  const IMAGE_DB_NAME = "ufprFormulaTelemetryLocal";
-  const IMAGE_STORE_NAME = "inventoryImages";
+  const ATTACHMENT_DB_NAME = "ufprFormulaTelemetryLocal";
+  const ATTACHMENT_STORE_NAME = "inventoryImages"; // Nome legado usado pelos PDFs já salvos no navegador.
 
   const elements = {
     list: document.getElementById("inventoryList"),
@@ -64,19 +62,29 @@
     datasheetName: document.getElementById("inventoryDatasheetName"),
     datasheetStatus: document.getElementById("inventoryDatasheetStatus"),
     removeDatasheet: document.getElementById("inventoryRemoveDatasheet"),
-    chooseImage: document.getElementById("inventoryChooseImage"),
-    imageInput: document.getElementById("inventoryImageInput"),
-    imagePreview: document.getElementById("inventoryImagePreview"),
-    previewImage: document.getElementById("inventoryPreviewImage"),
-    previewPlaceholder: document.getElementById("inventoryPreviewPlaceholder"),
-    removeImage: document.getElementById("inventoryRemoveImage"),
-    imageStatus: document.getElementById("inventoryImageStatus"),
     save: document.getElementById("inventorySave")
   };
 
   if (!elements.list || !elements.form || !elements.modal) return;
 
   const appShell = document.querySelector(".inventory-shell");
+  const formHint = document.getElementById("inventoryFormHint");
+  const movement = {
+    form: document.getElementById("inventoryMovementForm"),
+    withdraw: document.getElementById("inventoryWithdrawButton"),
+    search: document.getElementById("inventoryMovementSearch"),
+    results: document.getElementById("inventoryMovementResults"),
+    status: document.getElementById("inventoryMovementStatus"),
+    amount: document.getElementById("inventoryMovementAmount"),
+    label: document.getElementById("inventoryMovementLabel"),
+    quantity: document.getElementById("inventoryMovementQuantity"),
+    save: document.getElementById("inventoryMovementSave"),
+    create: document.getElementById("inventoryNewItem"),
+    similar: document.getElementById("inventorySimilarItems"),
+    similarResults: document.getElementById("inventorySimilarResults"),
+    direction: 1,
+    itemId: null
+  };
   const unitLabels = {
     un: "un",
     par: "par",
@@ -91,12 +99,8 @@
   let items = [];
   let revision = 0;
   let storageAvailable = true;
-  let imageDatabaseAvailable = true;
-  let imageDatabasePromise = null;
-  let renderGeneration = 0;
-  let cardObjectUrls = [];
-  let draftImageBlob;
-  let draftImagePreviewUrl = null;
+  let attachmentDatabaseAvailable = true;
+  let attachmentDatabasePromise = null;
   let draftDatasheetBlob;
   let draftDatasheetMetadata = null;
   let modalTrigger = elements.add;
@@ -106,7 +110,7 @@
   const cloudEnabled = Boolean(cloudConfig?.url || cloudConfig?.publishableKey);
   const stagedAttachments = new Map();
   let cloudReady = false;
-  let cloudBusy = false;
+  let cloudRequest = null;
 
   async function cloudRpc(name, parameters) {
     const url = new URL("/rest/v1/rpc/am07_inventory_" + name, cloudConfig.url);
@@ -116,9 +120,12 @@
       body: JSON.stringify(parameters ?? {}),
       signal: AbortSignal.timeout(30000)
     });
-    const data = await response.json();
-    if (!response.ok) throw Object.assign(new Error(data.message), { code: data.code });
-    return data;
+    if (response.ok) return response.json();
+    const data = await response.json().catch(() => ({}));
+    throw Object.assign(new Error(data.message ?? `Erro HTTP ${response.status}`), {
+      code: data.code,
+      status: response.status
+    });
   }
 
   function loadCloudDocument(documentValue) {
@@ -129,30 +136,29 @@
 
   async function runCloudMutation(operation) {
     if (!cloudEnabled) return operation();
-    if (!cloudReady || cloudBusy) return;
-    cloudBusy = true;
+    if (!cloudReady || cloudRequest) return;
+    cloudRequest = Promise.resolve().then(operation);
     try {
-      return await operation();
+      return await cloudRequest;
     } finally {
       stagedAttachments.clear();
-      cloudBusy = false;
+      cloudRequest = null;
     }
   }
 
   async function refreshCloudInventory() {
-    if (!cloudReady || cloudBusy || !elements.modal.hidden) return;
-    cloudBusy = true;
-    try {
-      const result = await cloudRpc("read");
-      if (result.revision !== revision) {
-        loadCloudDocument(result);
-        renderInventory();
+    if (!elements.modal.hidden) return;
+    await runCloudMutation(async () => {
+      try {
+        const result = await cloudRpc("read");
+        if (result.revision !== revision) {
+          loadCloudDocument(result);
+          renderInventory();
+        }
+      } catch (error) {
+        console.warn("Falha ao consultar o estoque compartilhado:", error);
       }
-    } catch (error) {
-      console.warn("Falha ao consultar o estoque compartilhado:", error);
-    } finally {
-      cloudBusy = false;
-    }
+    });
   }
 
   async function startCloudInventory() {
@@ -271,7 +277,6 @@
       manufacturer: normalizeWhitespace(raw.manufacturer, 60),
       location: normalizeWhitespace(raw.location, 60),
       notes: normalizeNotes(raw.notes),
-      hasImage: Boolean(raw.hasImage),
       datasheetUrl: normalizeDatasheetUrl(raw.datasheetUrl ?? raw.datasheetLink),
       hasDatasheet: Boolean(raw.hasDatasheet ?? raw.hasDatasheetFile),
       datasheetName: normalizeWhitespace(raw.datasheetName ?? raw.datasheetFileName, 120),
@@ -405,45 +410,45 @@
     const messages = [];
     if (storageAvailable) messages.push("salvo neste navegador");
     else messages.push("metadados sem persistência");
-    if (!imageDatabaseAvailable) messages.push("imagens e anexos indisponíveis");
+    if (!attachmentDatabaseAvailable) messages.push("anexos indisponíveis");
     elements.storageState.textContent = messages.join(" · ");
-    elements.storageState.dataset.state = storageAvailable && imageDatabaseAvailable ? "ok" : "error";
+    elements.storageState.dataset.state = storageAvailable && attachmentDatabaseAvailable ? "ok" : "error";
     elements.storageState.title = "Os dados não são enviados para a nuvem e não acompanham o ZIP. Use Backup JSON para transferi-los.";
   }
 
-  function openImageDatabase() {
-    if (imageDatabasePromise) return imageDatabasePromise;
-    imageDatabasePromise = new Promise((resolve, reject) => {
+  function openAttachmentDatabase() {
+    if (attachmentDatabasePromise) return attachmentDatabasePromise;
+    attachmentDatabasePromise = new Promise((resolve, reject) => {
       if (!window.indexedDB) {
         reject(new Error("IndexedDB não disponível"));
         return;
       }
 
-      const request = window.indexedDB.open(IMAGE_DB_NAME, 1);
+      const request = window.indexedDB.open(ATTACHMENT_DB_NAME, 1);
       request.onupgradeneeded = () => {
         const database = request.result;
-        if (!database.objectStoreNames.contains(IMAGE_STORE_NAME)) {
-          database.createObjectStore(IMAGE_STORE_NAME, { keyPath: "id" });
+        if (!database.objectStoreNames.contains(ATTACHMENT_STORE_NAME)) {
+          database.createObjectStore(ATTACHMENT_STORE_NAME, { keyPath: "id" });
         }
       };
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error("Falha ao abrir banco de imagens"));
-      request.onblocked = () => reject(new Error("Banco de imagens bloqueado por outra aba"));
+      request.onerror = () => reject(request.error ?? new Error("Falha ao abrir banco de anexos"));
+      request.onblocked = () => reject(new Error("Banco de anexos bloqueado por outra aba"));
     }).catch((error) => {
-      imageDatabaseAvailable = false;
-      imageDatabasePromise = null;
+      attachmentDatabaseAvailable = false;
+      attachmentDatabasePromise = null;
       updateStorageState();
-      console.warn("Imagens locais indisponíveis:", error);
+      console.warn("Anexos locais indisponíveis:", error);
       throw error;
     });
-    return imageDatabasePromise;
+    return attachmentDatabasePromise;
   }
 
-  async function imageStoreOperation(mode, callback) {
-    const database = await openImageDatabase();
+  async function attachmentStoreOperation(mode, callback) {
+    const database = await openAttachmentDatabase();
     return new Promise((resolve, reject) => {
-      const transaction = database.transaction(IMAGE_STORE_NAME, mode);
-      const store = transaction.objectStore(IMAGE_STORE_NAME);
+      const transaction = database.transaction(ATTACHMENT_STORE_NAME, mode);
+      const store = transaction.objectStore(ATTACHMENT_STORE_NAME);
       let request;
       try {
         request = callback(store);
@@ -452,30 +457,9 @@
         return;
       }
       transaction.oncomplete = () => resolve(request?.result);
-      transaction.onerror = () => reject(transaction.error ?? request?.error ?? new Error("Falha no banco de imagens"));
-      transaction.onabort = () => reject(transaction.error ?? new Error("Operação de imagem cancelada"));
+      transaction.onerror = () => reject(transaction.error ?? request?.error ?? new Error("Falha no banco de anexos"));
+      transaction.onabort = () => reject(transaction.error ?? new Error("Operação de anexo cancelada"));
     });
-  }
-
-  function getImage(id) {
-    if (cloudEnabled) return cloudRpc("attachment", { p_id: id, p_kind: "image" }).then((data) => dataUrlToBlob(data?.data));
-    return imageStoreOperation("readonly", (store) => store.get(id)).then((record) => record?.blob ?? null);
-  }
-
-  async function putImage(id, blob) {
-    if (cloudEnabled) {
-      stagedAttachments.set(JSON.stringify([id, "image"]), { id, kind: "image", payload: { data: await blobToDataUrl(blob) } });
-      return;
-    }
-    return imageStoreOperation("readwrite", (store) => store.put({ id, blob, updatedAt: new Date().toISOString() }));
-  }
-
-  function deleteImage(id) {
-    if (cloudEnabled) {
-      stagedAttachments.set(JSON.stringify([id, "image"]), { id, kind: "image", payload: null });
-      return Promise.resolve();
-    }
-    return imageStoreOperation("readwrite", (store) => store.delete(id));
   }
 
   function datasheetStorageKey(id) {
@@ -489,7 +473,7 @@
         return decoded ? { blob: decoded.blob, ...decoded.metadata } : null;
       });
     }
-    return imageStoreOperation("readonly", (store) => store.get(datasheetStorageKey(id)))
+    return attachmentStoreOperation("readonly", (store) => store.get(datasheetStorageKey(id)))
       .then((record) => record?.blob ? record : null);
   }
 
@@ -500,7 +484,7 @@
       });
       return;
     }
-    return imageStoreOperation("readwrite", (store) => store.put({
+    return attachmentStoreOperation("readwrite", (store) => store.put({
       id: datasheetStorageKey(id),
       blob,
       fileName: normalizeWhitespace(metadata.fileName, 120) || "datasheet.pdf",
@@ -515,7 +499,7 @@
       stagedAttachments.set(JSON.stringify([id, "datasheet"]), { id, kind: "datasheet", payload: null });
       return Promise.resolve();
     }
-    return imageStoreOperation("readwrite", (store) => store.delete(datasheetStorageKey(id)));
+    return attachmentStoreOperation("readwrite", (store) => store.delete(datasheetStorageKey(id)));
   }
 
   function normalizeSearch(value) {
@@ -528,6 +512,152 @@
 
   function inventoryFingerprint(item) {
     return normalizeSearch([item.name, item.category, item.location, item.unit].join("|"));
+  }
+
+  function matchText(value) {
+    return normalizeSearch(value).replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function similarWord(first, second) {
+    if (first === second) return true;
+    if (first.length < 4 || second.length < 4 || /\d/.test(first + second)) return false;
+    if (Math.abs(first.length - second.length) > 1) return false;
+    const shorter = first.length <= second.length ? first : second;
+    const longer = first.length <= second.length ? second : first;
+    let index = 0;
+    while (index < shorter.length && shorter[index] === longer[index]) index++;
+    return shorter.slice(index + (shorter.length === longer.length ? 1 : 0)) === longer.slice(index + 1);
+  }
+
+  function findMovementItems(name, sku = "", suggestionsOnly = false) {
+    const query = matchText(name);
+    const code = matchText(sku);
+    const words = query.split(" ");
+    return items.map((item) => {
+      const itemName = matchText(item.name);
+      const itemCode = matchText(item.sku);
+      let score = 0;
+      if ((code && code === itemCode) || (query && (query === itemName || query === itemCode))) score = 3;
+      else if (query && (!suggestionsOnly || query.length >= 3) &&
+        words.every((word) => itemName.includes(word) || itemCode.includes(word))) score = 2;
+      else if (query.length >= 4 &&
+        words.every((word) => itemName.split(" ").some((candidate) => similarWord(word, candidate)))) score = 1;
+      return { item, score };
+    }).filter(({ score }) => score || (!suggestionsOnly && !query))
+      .sort((a, b) => b.score - a.score || a.item.name.localeCompare(b.item.name, "pt-BR"));
+  }
+
+  function movementBalance(item) {
+    return item.quantityKnown === false
+      ? "Sem contagem"
+      : `Saldo: ${formatQuantity(item.quantity)} ${item.unit}`;
+  }
+
+  function renderMovementMatches(container, matches, onSelect) {
+    container.replaceChildren(...matches.map(({ item }) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      const title = document.createElement("strong");
+      title.textContent = item.name;
+      const details = document.createElement("small");
+      details.textContent = [item.sku, item.location, movementBalance(item)].filter(Boolean).join(" · ");
+      button.append(title, details);
+      button.addEventListener("click", () => onSelect(item));
+      return button;
+    }));
+  }
+
+  function showSimilarItems() {
+    if (elements.id.value) return;
+    const matches = findMovementItems(elements.name.value, elements.sku.value, true).slice(0, 4);
+    movement.similar.hidden = matches.length === 0;
+    renderMovementMatches(movement.similarResults, matches, (item) => openMovement(1, modalTrigger, item));
+  }
+
+  function searchMovementItems() {
+    movement.itemId = null;
+    movement.amount.hidden = true;
+    movement.quantity.disabled = true;
+    movement.save.hidden = true;
+    const matches = findMovementItems(movement.search.value);
+    renderMovementMatches(movement.results, matches.slice(0, 8), selectMovementItem);
+    movement.status.textContent = matches.length > 8 ? "Digite mais detalhes para refinar a busca."
+      : matches.length === 0 ? "Nenhum componente encontrado." : "";
+  }
+
+  function selectMovementItem(item) {
+    movement.itemId = item.id;
+    movement.search.value = item.name;
+    movement.results.replaceChildren();
+    const canWithdraw = item.quantityKnown !== false && item.quantity > 0;
+    const canUpdate = movement.direction > 0 || canWithdraw;
+    movement.status.textContent = [item.sku, item.location, movementBalance(item),
+      item.quantityKnown === false
+        ? (canUpdate ? "A quantidade adicionada será registrada como saldo inicial." : "Informe o saldo no cadastro antes de retirar.")
+        : (!canUpdate ? "Não há saldo para retirar." : "")].filter(Boolean).join(" · ");
+    movement.label.textContent = `Quantidade a ${movement.direction > 0 ? "adicionar" : "remover"} (${item.unit})`;
+    movement.quantity.value = "";
+    movement.quantity.disabled = !canUpdate;
+    movement.quantity.max = movement.direction < 0 ? item.quantity : 1_000_000_000;
+    movement.amount.hidden = !canUpdate;
+    movement.save.hidden = !canUpdate;
+    (canUpdate ? movement.quantity : movement.search).focus();
+  }
+
+  function openMovement(direction, trigger, item = null) {
+    if (cloudEnabled && (!cloudReady || cloudRequest)) return;
+    modalTrigger = trigger;
+    movement.direction = direction;
+    movement.search.value = "";
+    movement.create.hidden = direction < 0;
+    movement.save.disabled = pendingExternalInventoryUpdate;
+    movement.save.textContent = direction > 0 ? "Adicionar quantidade" : "Remover quantidade";
+    elements.dialogTitle.textContent = direction > 0 ? "Adicionar item" : "Remover item";
+    formHint.textContent = direction > 0 ? "Selecione um componente para aumentar o saldo." : "Selecione o componente do qual deseja retirar uma quantidade.";
+    elements.form.hidden = true;
+    movement.form.hidden = false;
+    showInventoryModal();
+    if (item) selectMovementItem(item);
+    else {
+      searchMovementItems();
+      movement.search.focus();
+    }
+  }
+
+  async function saveMovement() {
+    if (movement.save.disabled || pendingExternalInventoryUpdate) return;
+    const item = items.find(({ id }) => id === movement.itemId);
+    const amount = movement.quantity.valueAsNumber;
+    if (!item || !Number.isFinite(amount) || amount <= 0) {
+      movement.status.textContent = "Informe uma quantidade maior que zero.";
+      movement.quantity.focus();
+      return;
+    }
+    if (movement.direction < 0 && (item.quantityKnown === false || amount > item.quantity)) {
+      movement.status.textContent = "O saldo disponível é menor que a quantidade solicitada.";
+      return;
+    }
+    const current = item.quantityKnown === false ? 0 : item.quantity;
+    const quantity = Math.round((current + movement.direction * amount) * 100) / 100;
+    if (quantity > 1_000_000_000) {
+      movement.status.textContent = "O saldo máximo permitido é 1.000.000.000.";
+      return;
+    }
+    movement.save.disabled = true;
+    const nextItems = items.map((candidate) => candidate.id === item.id
+      ? { ...candidate, quantity, quantityKnown: true, updatedAt: new Date().toISOString() }
+      : candidate);
+    if (!await saveInventory(nextItems)) {
+      movement.save.disabled = pendingExternalInventoryUpdate;
+      movement.status.textContent = pendingExternalInventoryUpdate
+        ? "O estoque mudou. Feche esta janela antes de tentar de novo."
+        : "Não foi possível confirmar o ajuste. Confira o saldo antes de tentar de novo.";
+      return;
+    }
+    closeInventoryModal({ restoreFocus: false });
+    renderInventory();
+    (modalTrigger.isConnected ? modalTrigger : elements.add).focus();
+    notify(`${item.name}: ${movementBalance({ ...item, quantity, quantityKnown: true })}.`);
   }
 
   function applyBundledInventorySeed() {
@@ -669,10 +799,6 @@
     return element;
   }
 
-  function initials(name) {
-    return name.split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join("").toLocaleUpperCase("pt-BR") || "—";
-  }
-
   function appendMeta(container, label, value) {
     const wrapper = makeElement("div");
     wrapper.append(makeElement("small", "", label), makeElement("span", "", value || "—"));
@@ -686,15 +812,6 @@
     card.dataset.inventoryId = item.id;
     card.dataset.stock = status;
     card.setAttribute("role", "listitem");
-
-    const imageBox = makeElement("div", "inventory-card-image");
-    const image = document.createElement("img");
-    image.alt = `Imagem de ${item.name}`;
-    image.hidden = true;
-    image.dataset.inventoryImage = item.id;
-    const imageFallback = makeElement("span", "", initials(item.name));
-    imageFallback.dataset.inventoryImageFallback = item.id;
-    imageBox.append(image, imageFallback);
 
     const content = makeElement("div", "inventory-card-content");
     const top = makeElement("div", "inventory-card-top");
@@ -756,35 +873,8 @@
     actions.append(edit, remove);
 
     content.append(top, code, meta, quantity, actions);
-    card.append(imageBox, content);
+    card.append(content);
     return card;
-  }
-
-  function releaseCardImages() {
-    cardObjectUrls.forEach((url) => URL.revokeObjectURL(url));
-    cardObjectUrls = [];
-  }
-
-  async function hydrateCardImages(filteredItems, generation) {
-    if (!imageDatabaseAvailable) return;
-    await Promise.all(filteredItems.filter((item) => item.hasImage).map(async (item) => {
-      try {
-        const blob = await getImage(item.id);
-        if (!blob || generation !== renderGeneration) return;
-        const image = elements.list.querySelector(`[data-inventory-image="${CSS.escape(item.id)}"]`);
-        const fallback = elements.list.querySelector(`[data-inventory-image-fallback="${CSS.escape(item.id)}"]`);
-        if (!image) return;
-        const url = URL.createObjectURL(blob);
-        cardObjectUrls.push(url);
-        image.onload = () => {
-          image.hidden = false;
-          if (fallback) fallback.hidden = true;
-        };
-        image.src = url;
-      } catch (error) {
-        console.warn(`Imagem de ${item.id} indisponível:`, error);
-      }
-    }));
   }
 
   function updateCategoryFilter() {
@@ -843,7 +933,7 @@
     } else {
       elements.emptyLabel.textContent = "ESTOQUE AINDA VAZIO";
       elements.emptyTitle.textContent = "Cadastre o primeiro componente";
-      elements.emptyDescription.textContent = "Inclua quantidade, tipo, localização, custo e uma imagem para encontrar qualquer peça rapidamente.";
+      elements.emptyDescription.textContent = "Inclua quantidade, tipo, localização, custo e datasheet para encontrar qualquer peça rapidamente.";
       elements.emptyAdd.textContent = "Adicionar primeiro componente";
       elements.emptyAdd.dataset.action = "add";
     }
@@ -854,8 +944,6 @@
     updateSummary();
     updateStorageState();
     const filteredItems = currentFilteredItems();
-    const generation = ++renderGeneration;
-    releaseCardImages();
     const fragment = document.createDocumentFragment();
     filteredItems.forEach((item) => fragment.append(createInventoryCard(item)));
     elements.list.replaceChildren(fragment);
@@ -863,7 +951,6 @@
       ? "Nenhum componente cadastrado"
       : `Exibindo ${filteredItems.length} de ${items.length} itens · ${unitBreakdown(filteredItems)}`;
     updateEmptyState(filteredItems);
-    hydrateCardImages(filteredItems, generation);
   }
 
   function clearFilters() {
@@ -873,34 +960,6 @@
     elements.sort.value = "updated";
     renderInventory();
     elements.search.focus();
-  }
-
-  function releaseDraftPreview() {
-    if (draftImagePreviewUrl) URL.revokeObjectURL(draftImagePreviewUrl);
-    draftImagePreviewUrl = null;
-  }
-
-  function showDraftImage(blob) {
-    releaseDraftPreview();
-    if (!blob) {
-      elements.previewImage.hidden = true;
-      elements.previewImage.removeAttribute("src");
-      elements.previewPlaceholder.hidden = false;
-      elements.imagePreview.dataset.empty = "true";
-      elements.removeImage.hidden = true;
-      return;
-    }
-    draftImagePreviewUrl = URL.createObjectURL(blob);
-    elements.previewImage.src = draftImagePreviewUrl;
-    elements.previewImage.hidden = false;
-    elements.previewPlaceholder.hidden = true;
-    elements.imagePreview.dataset.empty = "false";
-    elements.removeImage.hidden = false;
-  }
-
-  function setImageStatus(message, state = "ok") {
-    elements.imageStatus.textContent = message;
-    elements.imageStatus.dataset.state = state;
   }
 
   function formatAssetSize(bytes) {
@@ -937,22 +996,25 @@
     };
   }
 
-  async function openInventoryModal(id = null, trigger = null) {
-    if (cloudEnabled && (!cloudReady || cloudBusy)) return;
+  function openInventoryModal(id = null, trigger = null, name = "") {
+    if (cloudEnabled && (!cloudReady || cloudRequest)) return;
     modalTrigger = trigger ?? document.activeElement ?? elements.add;
     elements.form.reset();
+    elements.name.value = name;
+    movement.similar.hidden = true;
+    movement.similarResults.replaceChildren();
+    movement.form.hidden = true;
+    elements.form.hidden = false;
+    formHint.textContent = "Os campos marcados com * são obrigatórios.";
     elements.id.value = "";
     elements.quantity.value = "";
     elements.minimum.value = "";
     if (elements.lowStockOverride) elements.lowStockOverride.checked = false;
     elements.unit.value = "un";
     elements.form.querySelectorAll("[aria-invalid]").forEach((field) => field.removeAttribute("aria-invalid"));
-    draftImageBlob = undefined;
     draftDatasheetBlob = undefined;
     draftDatasheetMetadata = null;
-    showDraftImage(null);
     showDraftDatasheet(null);
-    setImageStatus("PNG, JPG ou WebP. A imagem será reduzida para economizar espaço.");
 
     const item = id ? items.find((candidate) => candidate.id === id) : null;
     elements.dialogTitle.textContent = item ? "Editar componente" : "Adicionar componente";
@@ -978,41 +1040,30 @@
       } else if (item.datasheetUrl) {
         showDraftDatasheet(null, "Link externo do fabricante cadastrado.");
       }
-      if (item.hasImage && imageDatabaseAvailable) {
-        setImageStatus("Carregando imagem salva…");
-        try {
-          const blob = await getImage(item.id);
-          if (elements.id.value === item.id && blob) {
-            showDraftImage(blob);
-            setImageStatus("Imagem salva localmente neste navegador.");
-          } else if (!blob) {
-            setImageStatus("A referência da imagem existe, mas o arquivo não foi encontrado.", "error");
-          }
-        } catch {
-          setImageStatus("Não foi possível carregar a imagem local.", "error");
-        }
-      }
+
     }
 
-    elements.modal.hidden = false;
-    if (appShell) appShell.inert = true;
-    document.body.style.overflow = "hidden";
+    showSimilarItems();
+    showInventoryModal();
     requestAnimationFrame(() => elements.name.focus());
   }
 
+  function showInventoryModal() {
+    elements.modal.hidden = false;
+    if (appShell) appShell.inert = true;
+    document.body.style.overflow = "hidden";
+  }
+
   function closeInventoryModal(options = {}) {
-    if (cloudEnabled && cloudBusy && options?.restoreFocus !== false) return;
+    if (cloudEnabled && cloudRequest && options?.restoreFocus !== false) return;
     const restoreFocus = options?.restoreFocus !== false;
     const reloadExternalUpdate = pendingExternalInventoryUpdate;
     pendingExternalInventoryUpdate = false;
     elements.modal.hidden = true;
     if (appShell) appShell.inert = false;
     document.body.style.removeProperty("overflow");
-    releaseDraftPreview();
-    draftImageBlob = undefined;
     draftDatasheetBlob = undefined;
     draftDatasheetMetadata = null;
-    elements.imageInput.value = "";
     elements.datasheetInput.value = "";
     elements.save.disabled = false;
     if (restoreFocus && modalTrigger instanceof HTMLElement) modalTrigger.focus();
@@ -1026,51 +1077,6 @@
       renderInventory();
       notify("Alterações de outra aba foram carregadas; o formulário anterior não foi salvo.");
     }
-  }
-
-  function canvasBlob(canvas, type, quality) {
-    return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Falha ao gerar imagem")), type, quality));
-  }
-
-  async function loadBitmap(file) {
-    if (window.createImageBitmap) return window.createImageBitmap(file);
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const image = new Image();
-      image.onload = () => {
-        URL.revokeObjectURL(url);
-        resolve(image);
-      };
-      image.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error("Imagem inválida"));
-      };
-      image.src = url;
-    });
-  }
-
-  async function optimizeImage(file) {
-    const accepted = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
-    if (!accepted.has(file.type)) throw new Error("Use uma imagem PNG, JPG, WebP ou GIF.");
-    if (file.size > MAX_SOURCE_IMAGE_BYTES) throw new Error("A imagem original deve ter no máximo 8 MB.");
-
-    const bitmap = await loadBitmap(file);
-    const maxDimension = 720;
-    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const context = canvas.getContext("2d", { alpha: false });
-    if (!context) throw new Error("O navegador não conseguiu processar a imagem.");
-    context.fillStyle = "#0e1114";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    if (typeof bitmap.close === "function") bitmap.close();
-
-    let blob = await canvasBlob(canvas, "image/webp", .78).catch(() => canvasBlob(canvas, "image/jpeg", .8));
-    if (blob.size > MAX_STORED_IMAGE_BYTES) blob = await canvasBlob(canvas, "image/webp", .62).catch(() => canvasBlob(canvas, "image/jpeg", .65));
-    if (blob.size > MAX_STORED_IMAGE_BYTES) throw new Error("A imagem continuou muito grande após a redução. Escolha outra imagem.");
-    return blob;
   }
 
   function validateForm() {
@@ -1153,7 +1159,6 @@
       manufacturer: elements.manufacturer.value,
       location: elements.location.value,
       notes: elements.notes.value,
-      hasImage: draftImageBlob instanceof Blob ? true : draftImageBlob === null ? false : Boolean(current?.hasImage),
       datasheetUrl: elements.datasheetUrl.value,
       hasDatasheet: draftDatasheetBlob instanceof Blob ? true : draftDatasheetBlob === null ? false : Boolean(current?.hasDatasheet),
       datasheetName: draftDatasheetBlob instanceof Blob
@@ -1172,20 +1177,13 @@
       return;
     }
 
-    const imageChangeRequested = draftImageBlob instanceof Blob || draftImageBlob === null;
     const datasheetChangeRequested = draftDatasheetBlob instanceof Blob || draftDatasheetBlob === null;
-    let previousImage = null;
     let previousDatasheet = null;
-    let imageChanged = false;
     let datasheetChanged = false;
 
     const rollbackAssets = async () => {
       if (cloudEnabled) return;
       try {
-        if (imageChanged) {
-          if (previousImage instanceof Blob) await putImage(item.id, previousImage);
-          else await deleteImage(item.id);
-        }
         if (datasheetChanged) {
           if (previousDatasheet?.blob instanceof Blob) await putDatasheet(item.id, previousDatasheet.blob, previousDatasheet);
           else await deleteDatasheet(item.id);
@@ -1196,15 +1194,7 @@
     };
 
     try {
-      if (!cloudEnabled && imageChangeRequested && current?.hasImage) previousImage = await getImage(item.id);
       if (!cloudEnabled && datasheetChangeRequested && current?.hasDatasheet) previousDatasheet = await getDatasheet(item.id);
-      if (draftImageBlob instanceof Blob) {
-        await putImage(item.id, draftImageBlob);
-        imageChanged = true;
-      } else if (draftImageBlob === null && current?.hasImage) {
-        await deleteImage(item.id);
-        imageChanged = true;
-      }
       if (draftDatasheetBlob instanceof Blob) {
         await putDatasheet(item.id, draftDatasheetBlob, draftDatasheetMetadata);
         datasheetChanged = true;
@@ -1214,7 +1204,7 @@
       }
     } catch (error) {
       await rollbackAssets();
-      console.error("Falha ao salvar imagem ou datasheet:", error);
+      console.error("Falha ao salvar datasheet:", error);
       elements.save.disabled = false;
       notify("Não foi possível salvar os anexos. O cadastro anterior foi mantido.");
       return;
@@ -1246,10 +1236,25 @@
     notify(current ? "Componente atualizado." : "Componente adicionado ao estoque.");
   }
 
+  async function queueQuantityAdjustment(id, delta) {
+    if (cloudEnabled) {
+      notify("Salvando ajuste de quantidade…");
+      // Process each tap after the preceding read or write so the click is never silently discarded.
+      while (cloudRequest) await cloudRequest.catch(() => {});
+    }
+    await runCloudMutation(() => adjustQuantity(id, delta));
+  }
+
   async function adjustQuantity(id, delta) {
     const item = items.find((candidate) => candidate.id === id);
-    if (!item) return;
-    if (item.quantityKnown === false && delta < 0) return;
+    if (!item) {
+      notify("Este componente não está mais no estoque.");
+      return;
+    }
+    if (delta < 0 && (item.quantityKnown === false || item.quantity <= 0)) {
+      notify("Não há saldo para retirar.");
+      return;
+    }
     const action = delta > 0 ? "increment" : "decrement";
     const quantity = item.quantityKnown === false && delta > 0
       ? 1
@@ -1264,15 +1269,19 @@
         saved = true;
       } catch (error) {
         console.error(error);
-        notify("Não foi possível confirmar o ajuste. Confira a quantidade antes de repetir.");
+        notify(error.name === "TimeoutError" || error.code === "55P03" || error.code === "57014" || error.status === 504
+          ? "O Supabase demorou para gravar. Confira o saldo antes de tentar novamente."
+          : "Não foi possível confirmar o ajuste. Confira a quantidade antes de repetir.");
       }
     } else {
       saved = persistInventory(nextItems);
     }
     if (saved) {
       renderInventory();
+      const updated = items.find((candidate) => candidate.id === id);
+      if (updated) notify(`${updated.name} · ${movementBalance(updated)}`);
       requestAnimationFrame(() => {
-        elements.list.querySelector(`[data-inventory-id="${CSS.escape(id)}"] [data-action="${action}"]`)?.focus();
+        elements.list.querySelector(`[data-inventory-id="${CSS.escape(id)}"] [data-action="${action}"]`)?.focus({ preventScroll: true });
       });
     }
   }
@@ -1303,7 +1312,7 @@
       previewWindow.document.title = "Carregando datasheet…";
       previewWindow.document.body.textContent = "Carregando datasheet…";
     }
-    if (item.hasDatasheet && imageDatabaseAvailable) {
+    if (item.hasDatasheet && attachmentDatabaseAvailable) {
       try {
         const record = await getDatasheet(id);
         if (record?.blob) {
@@ -1350,7 +1359,6 @@
     }
     let cleanupFailed = false;
     const cleanupOperations = [];
-    if (item.hasImage) cleanupOperations.push({ label: "imagem", run: () => deleteImage(id) });
     if (item.hasDatasheet) cleanupOperations.push({ label: "datasheet", run: () => deleteDatasheet(id) });
     for (const operation of cleanupOperations) {
       try {
@@ -1392,25 +1400,9 @@
   }
 
   async function buildExportDocument() {
-    const images = {};
     const datasheets = {};
-    let imageFailures = 0;
     let datasheetFailures = 0;
-    if (imageDatabaseAvailable) {
-      await Promise.all(items.filter((item) => item.hasImage).map(async (item) => {
-        try {
-          const blob = await getImage(item.id);
-          if (blob) images[item.id] = await blobToDataUrl(blob);
-          else imageFailures += 1;
-        } catch (error) {
-          imageFailures += 1;
-          console.warn(`Imagem ${item.id} não incluída no backup:`, error);
-        }
-      }));
-    } else {
-      imageFailures = items.filter((item) => item.hasImage).length;
-    }
-    if (imageDatabaseAvailable) {
+    if (attachmentDatabaseAvailable) {
       await Promise.all(items.filter((item) => item.hasDatasheet).map(async (item) => {
         try {
           const record = await getDatasheet(item.id);
@@ -1431,7 +1423,6 @@
       datasheetFailures = items.filter((item) => item.hasDatasheet).length;
     }
     return {
-      imageFailures,
       datasheetFailures,
       documentValue: {
         format: EXPORT_FORMAT,
@@ -1439,7 +1430,6 @@
         exportedAt: new Date().toISOString(),
         itemCount: items.length,
         items,
-        images,
         datasheets
       }
     };
@@ -1455,15 +1445,13 @@
       let attachmentsOmittedForSize = 0;
       if (blob.size > MAX_IMPORT_BYTES) {
         const generateWithoutAttachments = window.confirm(
-          "O backup com imagens e datasheets ultrapassa 50 MB e não poderia ser reimportado por esta versão.\n\nGerar agora um backup dos cadastros sem os anexos?"
+          "O backup com datasheets ultrapassa 50 MB e não poderia ser reimportado por esta versão.\n\nGerar agora um backup dos cadastros sem os anexos?"
         );
         if (!generateWithoutAttachments) {
           notify("Backup cancelado. Reduza ou remova alguns anexos antes de tentar novamente.");
           return;
         }
-        attachmentsOmittedForSize = Object.keys(backup.documentValue.images).length
-          + Object.keys(backup.documentValue.datasheets).length;
-        backup.documentValue.images = {};
+        attachmentsOmittedForSize = Object.keys(backup.documentValue.datasheets).length;
         backup.documentValue.datasheets = {};
         backup.documentValue.attachmentsOmitted = true;
         json = JSON.stringify(backup.documentValue, null, 2);
@@ -1471,10 +1459,10 @@
       }
       const date = new Date().toISOString().slice(0, 10);
       downloadBlob(blob, `estoque-ufpr-formula-${date}.json`);
-      const missingAttachments = backup.imageFailures + backup.datasheetFailures + attachmentsOmittedForSize;
+      const missingAttachments = backup.datasheetFailures + attachmentsOmittedForSize;
       notify(missingAttachments > 0
         ? `Backup gerado com ${items.length} componentes; ${missingAttachments} anexos não foram incluídos.`
-        : `Backup completo gerado com ${items.length} componentes, imagens e datasheets.`);
+        : `Backup completo gerado com ${items.length} componentes e datasheets.`);
     } catch (error) {
       console.error("Falha ao gerar backup do estoque:", error);
       notify("Não foi possível gerar o Backup JSON. Tente novamente ou remova anexos muito grandes.");
@@ -1733,7 +1721,7 @@
         inventorySheet,
         "ESTOQUE COMPLETO",
         `Todos os componentes · filtros disponíveis nos cabeçalhos · gerado em ${generatedLabel}`,
-        "T"
+        "S"
       );
       const inventoryRows = reportItems.map((item) => {
         const hasCount = item.quantityKnown !== false;
@@ -1751,7 +1739,7 @@
           stockStatusLabel(item), item.sku, item.name, item.category, item.manufacturer, item.location,
           hasCount ? item.quantity : "", unitLabels[item.unit] ?? item.unit, hasMinimum ? item.minimum : "",
           hasCount && hasMinimum ? item.quantity - item.minimum : "", deficit, hasCost ? item.unitCost : "",
-          hasCount && hasCost ? item.quantity * item.unitCost : "", item.hasImage ? "Sim" : "Não",
+          hasCount && hasCost ? item.quantity * item.unitCost : "",
           datasheetType, item.hasDatasheet ? item.datasheetName || "PDF anexado" : "",
           item.datasheetUrl ? "Abrir link" : "", item.notes,
           reportDate(item.createdAt), reportDate(item.updatedAt)
@@ -1762,20 +1750,20 @@
         columns: [
           "Situação", "Código / PN", "Componente", "Tipo", "Fabricante", "Localização",
           "Quantidade", "Unidade", "Estoque mínimo", "Saldo vs. mínimo", "Déficit para mínimo",
-          "Custo unitário (R$)", "Valor em estoque (R$)", "Imagem", "Datasheet",
+          "Custo unitário (R$)", "Valor em estoque (R$)", "Datasheet",
           "Nome do PDF", "Link do datasheet", "Observações", "Criado em", "Atualizado em"
         ],
         rows: inventoryRows,
-        widths: [17, 18, 28, 22, 22, 22, 13, 11, 15, 16, 18, 18, 20, 11, 16, 28, 18, 38, 19, 19]
+        widths: [17, 18, 28, 22, 22, 22, 13, 11, 15, 16, 18, 18, 20, 16, 28, 18, 38, 19, 19]
       });
       styleStatusColumn(inventorySheet, reportItems, inventoryTable.firstDataRow, 1);
       [7, 9, 10, 11].forEach((column) => { inventorySheet.getColumn(column).numFmt = "#,##0.00"; });
       [12, 13].forEach((column) => { inventorySheet.getColumn(column).numFmt = '"R$" #,##0.00'; });
-      [19, 20].forEach((column) => { inventorySheet.getColumn(column).numFmt = "dd/mm/yyyy hh:mm"; });
-      inventorySheet.getColumn(18).alignment = { vertical: "top", horizontal: "left", wrapText: true };
+      [18, 19].forEach((column) => { inventorySheet.getColumn(column).numFmt = "dd/mm/yyyy hh:mm"; });
+      inventorySheet.getColumn(17).alignment = { vertical: "top", horizontal: "left", wrapText: true };
       reportItems.forEach((item, index) => {
         if (!item.datasheetUrl) return;
-        const cell = inventorySheet.getCell(inventoryTable.firstDataRow + index, 17);
+        const cell = inventorySheet.getCell(inventoryTable.firstDataRow + index, 16);
         cell.value = { text: "Abrir link", hyperlink: item.datasheetUrl, tooltip: item.datasheetUrl };
         cell.font = { name: "Aptos", size: 10, color: { argb: excelReportColors.blue }, underline: true };
       });
@@ -1908,20 +1896,6 @@
     notify(`Relatório CSV gerado${unknownCount > 0 ? ` com ${unknownCount} cadastro(s) sem contagem sinalizado(s)` : ""}.`);
   }
 
-  function dataUrlToBlob(dataUrl) {
-    if (typeof dataUrl !== "string" || !/^data:image\/(png|jpeg|webp);base64,/i.test(dataUrl)) return null;
-    const [header, encoded] = dataUrl.split(",", 2);
-    try {
-      const binary = atob(encoded);
-      if (binary.length > MAX_STORED_IMAGE_BYTES) return null;
-      const bytes = new Uint8Array(binary.length);
-      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-      return new Blob([bytes], { type: header.slice(5, header.indexOf(";")) });
-    } catch {
-      return null;
-    }
-  }
-
   function dataUrlToDatasheet(rawRecord) {
     const record = typeof rawRecord === "string" ? { data: rawRecord } : rawRecord;
     if (!record || typeof record !== "object" || Array.isArray(record)) return null;
@@ -2029,7 +2003,6 @@
           item: {
             ...item,
             id: freshId,
-            hasImage: false,
             hasDatasheet: false,
             datasheetName: "",
             datasheetSize: 0
@@ -2037,35 +2010,15 @@
         };
       });
 
-      const imageMap = !Array.isArray(parsed)
-        && parsed.images
-        && typeof parsed.images === "object"
-        && !Array.isArray(parsed.images)
-        ? parsed.images
-        : {};
       const datasheetMap = !Array.isArray(parsed)
         && parsed.datasheets
         && typeof parsed.datasheets === "object"
         && !Array.isArray(parsed.datasheets)
         ? parsed.datasheets
         : {};
-      let imagesImported = 0;
       let datasheetsImported = 0;
-      const stagedImageIds = [];
       const stagedDatasheetIds = [];
-      if (imageDatabaseAvailable) {
-        await Promise.all(appliedRecords.map(async (record) => {
-          const blob = dataUrlToBlob(imageMap[record.sourceId]);
-          if (!blob) return;
-          try {
-            await putImage(record.item.id, blob);
-            record.item.hasImage = true;
-            stagedImageIds.push(record.item.id);
-            imagesImported += 1;
-          } catch (error) {
-            console.warn(`Imagem ${record.sourceId} ignorada durante a importação:`, error);
-          }
-        }));
+      if (attachmentDatabaseAvailable) {
         await Promise.all(appliedRecords.map(async (record) => {
           const datasheet = dataUrlToDatasheet(datasheetMap[record.sourceId]);
           if (!datasheet) return;
@@ -2085,13 +2038,12 @@
       const appliedItems = appliedRecords.map((record) => record.item);
       const nextItems = replace ? appliedItems : [...items, ...appliedItems];
       if (!await saveInventory(nextItems)) {
-        await Promise.all(stagedImageIds.map((id) => deleteImage(id).catch(() => {})));
         await Promise.all(stagedDatasheetIds.map((id) => deleteDatasheet(id).catch(() => {})));
         return;
       }
 
       renderInventory();
-      notify(`${appliedItems.length} componentes, ${imagesImported} imagens e ${datasheetsImported} datasheets importados.`);
+      notify(`${appliedItems.length} componentes e ${datasheetsImported} datasheets importados.`);
     } catch (error) {
       console.error("Falha na importação:", error);
       notify(`Não foi possível importar: ${error.message}`);
@@ -2100,7 +2052,16 @@
     }
   }
 
-  elements.add.addEventListener("click", (event) => openInventoryModal(null, event.currentTarget));
+  elements.add.addEventListener("click", (event) => openMovement(1, event.currentTarget));
+  movement.withdraw.addEventListener("click", (event) => openMovement(-1, event.currentTarget));
+  movement.search.addEventListener("input", searchMovementItems);
+  movement.create.addEventListener("click", () => openInventoryModal(null, modalTrigger, movement.search.value.trim()));
+  elements.name.addEventListener("input", showSimilarItems);
+  elements.sku.addEventListener("input", showSimilarItems);
+  movement.form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!movement.save.hidden) runCloudMutation(saveMovement);
+  });
   elements.emptyAdd.addEventListener("click", (event) => {
     if (event.currentTarget.dataset.action === "clear-filters") clearFilters();
     else openInventoryModal(null, event.currentTarget);
@@ -2125,47 +2086,17 @@
     const card = event.target.closest("[data-inventory-id]");
     if (!button || !card) return;
     const id = card.dataset.inventoryId;
-    if (button.dataset.action === "increment") runCloudMutation(() => adjustQuantity(id, 1));
-    if (button.dataset.action === "decrement") runCloudMutation(() => adjustQuantity(id, -1));
+    if (button.dataset.action === "increment") queueQuantityAdjustment(id, 1);
+    if (button.dataset.action === "decrement") queueQuantityAdjustment(id, -1);
     if (button.dataset.action === "datasheet") openDatasheet(id);
     if (button.dataset.action === "edit") openInventoryModal(id, button);
     if (button.dataset.action === "delete") runCloudMutation(() => removeItem(id));
   });
 
-  elements.imageInput.addEventListener("change", async () => {
-    const [file] = elements.imageInput.files;
-    if (!file) return;
-    if (!imageDatabaseAvailable) {
-      setImageStatus("O navegador não permite armazenar imagens nesta origem.", "error");
-      elements.imageInput.value = "";
-      return;
-    }
-    const previousDraftImage = draftImageBlob;
-    setImageStatus("Reduzindo imagem…");
-    try {
-      const optimizedImage = await optimizeImage(file);
-      draftImageBlob = optimizedImage;
-      showDraftImage(draftImageBlob);
-      setImageStatus(`Imagem pronta · ${Math.ceil(draftImageBlob.size / 1024)} KB`);
-    } catch (error) {
-      draftImageBlob = previousDraftImage;
-      setImageStatus(error.message, "error");
-      notify(error.message);
-    } finally {
-      elements.imageInput.value = "";
-    }
-  });
-
-  elements.removeImage.addEventListener("click", () => {
-    draftImageBlob = null;
-    showDraftImage(null);
-    setImageStatus("A imagem será removida ao salvar.");
-  });
-
   elements.datasheetInput.addEventListener("change", async () => {
     const [file] = elements.datasheetInput.files;
     if (!file) return;
-    if (!imageDatabaseAvailable) {
+    if (!attachmentDatabaseAvailable) {
       showDraftDatasheet(draftDatasheetMetadata, "O navegador não permite armazenar anexos nesta origem.", "error");
       elements.datasheetInput.value = "";
       return;
@@ -2194,7 +2125,6 @@
     showDraftDatasheet(null, "O PDF será removido ao salvar.");
   });
 
-  elements.chooseImage.addEventListener("click", () => elements.imageInput.click());
   elements.chooseDatasheet.addEventListener("click", () => elements.datasheetInput.click());
   elements.importButton.addEventListener("click", () => elements.importInput.click());
   elements.importInput.addEventListener("change", () => runCloudMutation(() => importJson(elements.importInput.files[0])));
@@ -2213,7 +2143,7 @@
     }
     if (event.key !== "Tab") return;
     const focusable = Array.from(elements.dialog.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])"))
-      .filter((element) => !element.disabled && !element.hidden);
+      .filter((element) => !element.disabled && element.getClientRects().length > 0);
     if (focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -2231,6 +2161,7 @@
     if (!elements.modal.hidden) {
       pendingExternalInventoryUpdate = true;
       elements.save.disabled = true;
+      movement.save.disabled = true;
       notify("O estoque foi alterado em outra aba. Feche este formulário para recarregar sem sobrescrever dados.");
       return;
     }
@@ -2238,11 +2169,6 @@
     readInventory();
     renderInventory();
     notify("Estoque atualizado a partir de outra aba.");
-  });
-
-  window.addEventListener("beforeunload", () => {
-    releaseCardImages();
-    releaseDraftPreview();
   });
 
   if (cloudEnabled) {
@@ -2255,14 +2181,12 @@
   if (seededItems > 0) {
     notify(`${seededItems} componentes do Inventario box foram adicionados ao estoque local.`);
   }
-  openImageDatabase().then(() => {
-    imageDatabaseAvailable = true;
+  openAttachmentDatabase().then(() => {
+    attachmentDatabaseAvailable = true;
     updateStorageState();
     renderInventory();
   }).catch(() => {
-    imageDatabaseAvailable = false;
-    elements.imageInput.disabled = true;
-    elements.chooseImage.disabled = true;
+    attachmentDatabaseAvailable = false;
     elements.datasheetInput.disabled = true;
     elements.chooseDatasheet.disabled = true;
     updateStorageState();

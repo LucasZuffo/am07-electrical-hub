@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#080a0c">
-  <title>UFPR Formula — Telemetria-EV · Protótipo v0.8</title>
+  <title>UFPR Formula — Telemetria-EV · Protótipo v0.9</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261112-1">
+  <link rel="stylesheet" href="styles.css?v=20261117-1">
   <link rel="stylesheet" href="../estilos/navegacao.css">
   <link rel="stylesheet" href="../estilos/marca-equipe.css">
 </head>
@@ -84,7 +84,7 @@
           </div>
           <button id="connectionButton" type="button">Configurar entrada</button>
         </div>
-        <div class="version">PROTÓTIPO UI · v0.6</div>
+        <div class="version">PROTÓTIPO UI · v0.9</div>
       </div>
     </aside>
 
@@ -354,18 +354,20 @@
               <div><small>BARRAMENTO CC</small><strong><span data-value="inverter-vbus">--</span> <em>V</em></strong></div>
             </div>
             <div id="inverterDemoControls" hidden>
-              <div class="inverter-pedal">
-                <label for="inverterDemoPedal">Pedal virtual • Teknic</label>
-                <output id="inverterDemoPedalReading" for="inverterDemoPedal">0% · 0 A</output>
-                <input id="inverterDemoPedal" type="range" min="0" max="100" value="0" aria-describedby="inverterDemoPedalHint">
-                <small id="inverterDemoPedalHint">Arraste ou mantenha uma seta pressionada. Ao soltar, o pedido de Iq volta a zero.</small>
-              </div>
               <form class="inverter-toolbar inverter-reference" id="inverterDemoForm">
                 <label>Modo de controle
                   <select id="inverterDemoMode"><option value="1">Velocidade</option><option value="0">Torque</option></select>
                 </label>
-                <label id="inverterDemoRpmField">Referência (rpm) <input id="inverterDemoRpm" type="number" min="-5500" max="5500" step="1" required></label>
-                <label id="inverterDemoTorqueField" hidden>Referência (Nm) <input id="inverterDemoTorque" type="number" min="-.437" max=".437" step=".001" required></label>
+                <div class="inverter-reference-value" id="inverterDemoRpmField">
+                  <label>Referência (rpm) <input id="inverterDemoRpm" type="number" min="-5500" max="5500" step="1" required></label>
+                  <input id="inverterDemoRpmSlider" type="range" min="-5500" max="5500" step="50" aria-label="Ajuste rápido de rotação em RPM">
+                  <div class="inverter-range-labels" aria-hidden="true"><span>−5.500</span><span>0</span><span>5.500 rpm</span></div>
+                </div>
+                <div class="inverter-reference-value" id="inverterDemoTorqueField" hidden>
+                  <label>Referência (Nm) <input id="inverterDemoTorque" type="number" min="-.437" max=".437" step=".001" required></label>
+                  <input id="inverterDemoTorqueSlider" type="range" min="-.435" max=".435" step=".005" aria-label="Ajuste rápido de torque em newton-metros">
+                  <div class="inverter-range-labels" aria-hidden="true"><span>−0,435</span><span>0</span><span>0,435 Nm</span></div>
+                </div>
                 <label>Limite de Iq (A) <input id="inverterDemoCurrent" type="number" min="0" max="12" step="any" required></label>
                 <label>Carga simulada (%) <input id="inverterDemoLoad" type="number" min="0" max="100" step="1" required></label>
                 <button class="primary-button" type="submit">Aplicar referências</button>
@@ -822,6 +824,68 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <dialog class="scope-viewer" id="inverterScopeViewer" aria-labelledby="inverterScopeTitle">
+    <header class="scope-viewer-header">
+      <div><small>OSCILOSCÓPIO DO INVERSOR</small><h2 id="inverterScopeTitle">Sinal</h2></div>
+      <div class="scope-viewer-actions">
+        <button class="secondary-button" type="button" id="scopeViewerFullscreen">Tela cheia</button>
+        <button class="secondary-button" type="button" id="scopeViewerClose" autofocus>Fechar</button>
+      </div>
+    </header>
+    <div class="scope-viewer-body">
+      <div class="scope-viewer-screen">
+        <svg id="scopeViewerChart" role="img" aria-labelledby="inverterScopeTitle"></svg>
+        <div class="scope-viewer-readings">
+          <span id="scopeViewerWindow"></span>
+          <span id="scopeViewerStats"></span>
+          <span id="scopeViewerCursor"></span>
+        </div>
+      </div>
+      <aside class="scope-viewer-controls" aria-label="Controles do osciloscópio">
+        <fieldset>
+          <legend>Aquisição</legend>
+          <p id="scopeViewerStatus" class="scope-viewer-status"></p>
+          <div class="scope-viewer-actions">
+            <button class="primary-button" type="button" id="scopeViewerCapture">Capturar</button>
+            <button class="secondary-button" type="button" id="scopeViewerFreeze" aria-pressed="false">Congelar</button>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Tempo</legend>
+          <label>Base horizontal
+            <select id="scopeViewerTime">
+              <option value="auto">Janela da captura</option>
+              <option value="0.2">0,2 ms/div</option><option value="0.5">0,5 ms/div</option>
+              <option value="1">1 ms/div</option><option value="2">2 ms/div</option>
+              <option value="5">5 ms/div</option><option value="10">10 ms/div</option>
+              <option value="20">20 ms/div</option><option value="50">50 ms/div</option>
+              <option value="100">100 ms/div</option><option value="200">200 ms/div</option>
+              <option value="500">500 ms/div</option><option value="1000">1 s/div</option>
+            </select>
+          </label>
+          <p class="scope-viewer-hint">Para capturar uma janela maior, ajuste a decimação no painel do osciloscópio.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Escala vertical</legend>
+          <label class="scope-viewer-check"><input id="scopeViewerAutoScale" type="checkbox" checked> Escala automática</label>
+          <label><span id="scopeViewerScaleUnit">Unidades/div</span><input id="scopeViewerScale" type="number" min="0.000001" max="1000000000" step="any" value="1" disabled></label>
+          <label><span id="scopeViewerCenterUnit">Centro da escala</span><input id="scopeViewerCenter" type="number" min="-1000000000" max="1000000000" step="any" value="0" disabled></label>
+        </fieldset>
+        <fieldset>
+          <legend>Trigger de visualização</legend>
+          <label>Modo
+            <select id="scopeViewerMode"><option value="auto">Auto</option><option value="normal">Normal</option><option value="single">Único</option></select>
+          </label>
+          <label>Borda
+            <select id="scopeViewerEdge"><option value="rising">Subida</option><option value="falling">Descida</option></select>
+          </label>
+          <label><span id="scopeViewerLevelUnit">Nível</span><input id="scopeViewerLevel" type="number" step="any" value="0"></label>
+          <button class="secondary-button" type="button" id="scopeViewerArm" disabled>Rearmar único</button>
+        </fieldset>
+      </aside>
+    </div>
+  </dialog>
+
   <div class="connection-modal" id="connectionModal" hidden>
     <section class="connection-dialog" role="dialog" aria-modal="true" aria-labelledby="connectionDialogTitle" aria-describedby="connectionSourceNote">
       <header class="connection-dialog-header">
@@ -907,8 +971,9 @@
       "payloadGroups": ["ev", "suspension", "tires", "imu", "chassis_strain", "brakes", "bearing_vibration", "harness_voltage"]
     }
   </script>
-  <script src="inverter-demo.js?v=20261111-3"></script>
-  <script src="inverter.js?v=20261111-3"></script>
+  <script src="inverter-demo.js?v=20261117-1"></script>
+  <script src="inverter-scope.js?v=20261117-1"></script>
+  <script src="inverter.js?v=20261117-1"></script>
   <script src="app.js?v=20261111-4"></script>
 </body>
 </html>

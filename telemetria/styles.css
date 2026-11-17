@@ -392,10 +392,33 @@ button.summary-card:hover .card-arrow { color: var(--accent); transform: transla
 .inverter-demo #inverterPanelMode { color: var(--accent); }
 .inverter-reference { padding-top: 14px; border-top: 1px solid var(--line); }
 .inverter-demo .inverter-reference input { width: 120px; }
-.inverter-pedal { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; margin: 12px 0; }
-.inverter-pedal output { font-variant-numeric: tabular-nums; }
-.inverter-pedal input, .inverter-pedal small { grid-column: 1 / -1; }
-.inverter-pedal input { width: 100%; accent-color: var(--accent); }
+.inverter-reference-value {
+  display: grid;
+  gap: 7px;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.inverter-reference-value[hidden] { display: none; }
+.inverter-reference-value input[type="number"] { appearance: textfield; }
+.inverter-reference-value input[type="number"]::-webkit-inner-spin-button,
+.inverter-reference-value input[type="number"]::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.inverter-demo .inverter-reference-value input[type="range"] {
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  accent-color: var(--accent);
+  cursor: ew-resize;
+}
+.inverter-range-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-2);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
 @media (max-width: 1050px) {
   #dynamics.active.inverter-demo { grid-template-columns: minmax(0, 1fr); }
 }
@@ -441,11 +464,118 @@ button.summary-card:hover .card-arrow { color: var(--accent); transform: transla
 .inverter-channels legend, .inverter-channels label { font-size: 11px; color: var(--muted-2); }
 .inverter-channels input { margin-right: 5px; accent-color: var(--accent); }
 .inverter-plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 10px; }
-.inverter-plots figure { margin: 12px 0 0; padding: 10px; border: 1px solid var(--line); border-radius: 5px; }
+.inverter-plot-button {
+  display: block;
+  position: relative;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+  cursor: zoom-in;
+}
+.inverter-plot-button:hover { border-color: var(--accent); }
+.inverter-plot-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.inverter-plots figure { margin: 0; }
+.inverter-plot-expand { display: block; margin-top: 6px; color: var(--accent); font-size: 10px; }
 .inverter-plots figcaption, .inverter-plot-scale { display: block; color: var(--muted-2); font-size: 11px; }
 .inverter-plots svg { display: block; width: 100%; margin: 8px 0; background: #101416; }
 .inverter-plots path { fill: none; stroke: var(--accent); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .inverter-plots .inverter-grid { stroke: var(--line-strong); stroke-width: 1; }
+
+.scope-viewer {
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 0;
+  background: #101417;
+  color: var(--text);
+}
+.scope-viewer::backdrop { background: #101417; }
+.scope-viewer-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px clamp(12px, 3vw, 36px);
+  border-bottom: 1px solid var(--line-strong);
+  background: #101417;
+}
+.scope-viewer-header small { color: var(--accent); font-size: 9px; letter-spacing: .12em; }
+.scope-viewer-header h2 { margin: 4px 0 0; font: 500 clamp(21px, 3vw, 34px) var(--font-display); }
+.scope-viewer-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 285px);
+  gap: 16px;
+  padding: 14px clamp(12px, 3vw, 36px) 24px;
+}
+.scope-viewer-screen { min-width: 0; align-self: start; }
+.scope-viewer-screen svg {
+  display: block;
+  width: 100%;
+  height: clamp(310px, 74dvh, 850px);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: #0c1012;
+  color: var(--muted-2);
+  cursor: crosshair;
+}
+.scope-viewer-screen svg text {
+  fill: currentColor;
+  font: 11px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.scope-screen-fill { fill: #12191c; }
+.scope-screen-grid { fill: none; stroke: #354348; stroke-width: 1; }
+.scope-waveform { fill: none; stroke: var(--accent); stroke-width: 2; }
+.scope-trigger, .scope-trigger-level, .scope-cursor { fill: none; stroke-width: 1; stroke-dasharray: 5 4; }
+.scope-trigger, .scope-trigger-level { stroke: var(--blue); }
+.scope-cursor { stroke: var(--text); }
+.scope-viewer-readings { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 10px; color: var(--muted-2); font-size: 11px; }
+#scopeViewerCursor { color: var(--accent); }
+.scope-viewer-controls { display: grid; align-content: start; gap: 10px; }
+.scope-viewer-controls fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 12px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+}
+.scope-viewer-controls legend { padding: 0 4px; font-size: 12px; }
+.scope-viewer-controls label { display: grid; gap: 4px; color: var(--muted-2); font-size: 11px; }
+.scope-viewer-controls label.scope-viewer-check { display: flex; align-items: center; gap: 7px; }
+.scope-viewer-controls input[type="checkbox"] { accent-color: var(--accent); }
+.scope-viewer-controls select, .scope-viewer-controls input[type="number"] {
+  width: 100%;
+  min-height: 30px;
+  padding: 3px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: #171d20;
+  color: var(--text);
+  font: inherit;
+}
+.scope-viewer-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.scope-viewer button { min-height: 32px; padding: 4px 9px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.scope-viewer :disabled { opacity: .5; cursor: default; }
+.scope-viewer-status, .scope-viewer-hint { margin: 0; color: var(--muted-2); font-size: 11px; line-height: 1.35; }
+@media (max-width: 700px) {
+  .scope-viewer-body { grid-template-columns: minmax(0, 1fr); }
+  .scope-viewer-screen svg { height: clamp(255px, 49dvh, 470px); }
+}
 .gforce-card { display: grid; grid-template-columns: 1fr 220px; grid-template-rows: auto 1fr; }
 .gforce-card .sensor-card-header { grid-column: 1; }
 .gforce-plot { grid-column: 2; grid-row: 1 / 3; width: 190px; height: 190px; align-self: center; justify-self: center; position: relative; }

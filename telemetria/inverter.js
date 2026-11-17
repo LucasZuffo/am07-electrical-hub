@@ -16,8 +16,6 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
   const scopeCsv = get("inverterScopeCsv");
   const demoForm = get("inverterDemoForm");
   const demoMode = get("inverterDemoMode");
-  const pedal = get("inverterDemoPedal");
-  const pedalReading = get("inverterDemoPedalReading");
   const commandButtons = [...get("inverterCommands").querySelectorAll("button")];
   const format = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
   const fineFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
@@ -26,6 +24,11 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     theta_elec: "rad elét.", theta_est: "rad elét.", theta_err: "rad elét.",
     omega_elec: "rad/s elét.", res_w_lpf: "rad/s elét.", res_sin: "ADC", res_cos: "ADC",
   };
+  const scopeViewer = createInverterScopeViewer({
+    units: scopeUnits,
+    captureNow: () => get("inverterScopeForm").requestSubmit(),
+  });
+  const miniPlots = new Map();
   let socket = null;
   let authenticated = false;
   let connectedPort = null;
@@ -66,6 +69,7 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     liveScopeButton.disabled = !connectedPort || working;
     scopeInterval.disabled = liveScopeButton.disabled || Boolean(liveScope);
     scopeCsv.disabled = !lastCapture;
+    scopeViewer.setCaptureEnabled(Boolean(connectedPort) && !working);
     demoForm.querySelectorAll("input, select, button").forEach((element) => { element.disabled = working; });
     syncDemoReferenceFields();
     commandButtons.forEach((button) => { button.disabled = !connectedPort || working; });
@@ -121,6 +125,7 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
 
   function clearDevice() {
     stopLiveScope();
+    scopeViewer.clear();
     connectedPort = null;
     catalog = [];
     search.value = "";
@@ -129,6 +134,7 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     channels.querySelectorAll("label").forEach((item) => item.remove());
     scopeStatus.textContent = "";
     lastCapture = null;
+    miniPlots.clear();
     plots.replaceChildren();
     paintReadings();
   }
@@ -265,7 +271,6 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     clearDevice();
     if (demo) {
       demo = null;
-      resetPedal();
       setDemoAppearance(false);
       Object.assign(get("inverterDecimation"), previousScopeSettings.decimation);
       get("inverterScopeDetails").open = previousScopeSettings.scopeOpen;
@@ -325,12 +330,16 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     get("inverterDemoTorqueField").hidden = speedMode;
     get("inverterDemoRpm").disabled = working || !speedMode;
     get("inverterDemoTorque").disabled = working || speedMode;
+    get("inverterDemoRpmSlider").disabled = working || !speedMode;
+    get("inverterDemoTorqueSlider").disabled = working || speedMode;
   }
 
   function showReferences(references) {
     demoMode.value = references.mode;
     get("inverterDemoRpm").value = references.rpm;
     get("inverterDemoTorque").value = references.torque;
+    get("inverterDemoRpmSlider").value = references.rpm;
+    get("inverterDemoTorqueSlider").value = references.torque;
     get("inverterDemoCurrent").value = references.currentLimit;
     get("inverterDemoLoad").value = references.load;
     syncDemoReferenceFields();
@@ -359,33 +368,15 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
     beginLiveScope();
   }
 
-  function updatePedal() {
-    if (!demo) return;
-    const percent = pedal.valueAsNumber;
-    const { iqReference, snapshot } = demo.setPedal(percent);
-    pedalReading.value = `${percent}% · ${format.format(iqReference)} A`;
-    showReferences(snapshot.references);
-    paintReadings(snapshot);
-  }
-
-  function resetPedal() {
-    if (pedal.valueAsNumber === 0) return;
-    pedal.value = "0";
-    pedalReading.value = "0% · 0 A";
-    updatePedal();
-  }
-
-  pedal.addEventListener("input", updatePedal);
-  pedal.addEventListener("keyup", resetPedal);
-  pedal.addEventListener("blur", resetPedal);
-  window.addEventListener("pointerup", resetPedal);
-  window.addEventListener("pointercancel", resetPedal);
-  window.addEventListener("blur", resetPedal);
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) resetPedal();
-  });
-
   demoMode.addEventListener("change", syncDemoReferenceFields);
+  ["Rpm", "Torque"].forEach((reference) => {
+    const input = get(`inverterDemo${reference}`);
+    const slider = get(`inverterDemo${reference}Slider`);
+    slider.addEventListener("input", () => { input.value = slider.value; });
+    input.addEventListener("input", () => {
+      if (Number.isFinite(input.valueAsNumber)) slider.value = input.value;
+    });
+  });
   demoForm.addEventListener("submit", (event) => {
     event.preventDefault();
     if (!demo) return;
@@ -462,7 +453,31 @@ function createInverterPanel({ setValue, setArc, connection, setAlert, isRunning
 
   function renderCapture(capture, decimation) {
     lastCapture = capture;
-    plots.replaceChildren(...capture.names.map((name, index) => plotInverterSignal(name, scopeUnits[name], capture.data[index], format)));
+    const changed = [...miniPlots.keys()].join("\n") !== capture.names.join("\n");
+    if (changed) {
+      const buttons = capture.names.map((name) => {
+        if (miniPlots.has(name)) return [name, miniPlots.get(name)];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "inverter-plot-button";
+        button.setAttribute("aria-label", `Ampliar sinal ${name}`);
+        button.append(document.createElement("figure"));
+        const hint = document.createElement("span");
+        hint.className = "inverter-plot-expand";
+        hint.setAttribute("aria-hidden", "true");
+        hint.textContent = "Ampliar ↗";
+        button.append(hint);
+        button.addEventListener("click", () => scopeViewer.open(name, button));
+        return [name, button];
+      });
+      miniPlots.clear();
+      buttons.forEach(([name, button]) => miniPlots.set(name, button));
+      plots.replaceChildren(...miniPlots.values());
+    }
+    capture.names.forEach((name, index) => {
+      miniPlots.get(name).firstElementChild.replaceWith(plotInverterSignal(name, scopeUnits[name], capture.data[index], format));
+    });
+    scopeViewer.update(capture, decimation);
     const milliseconds = (capture.n_samples - 1) * decimation / 10;
     scopeStatus.textContent = `${capture.n_samples} amostras por sinal · decimação ${decimation} · ${format.format(milliseconds)} ms${liveScope ? " · ao vivo" : ""}`;
     syncControls();

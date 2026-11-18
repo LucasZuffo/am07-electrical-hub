@@ -160,7 +160,7 @@ function createInverterScopeViewer({ units, captureNow }) {
     const samples = latest.capture.data[latest.capture.names.indexOf(signal)];
     if (!samples?.length) return;
     if (mode.value === "single" && captureSequence <= armedAfter) return;
-    const frame = { samples, sampleMs: latest.decimation / 10 };
+    const frame = { samples, sampleMs: latest.capture.sample_ms ?? latest.decimation / 10 };
     const duration = windowLength(frame);
     const trigger = scopeTriggerTime(samples, frame.sampleMs, level.valueAsNumber, edge.value, duration);
     if (trigger === null && mode.value !== "auto") {

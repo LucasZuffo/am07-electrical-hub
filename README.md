@@ -8,7 +8,25 @@ Central da equipe de elétrica da UFPR Fórmula para reunir ferramentas de eletr
 2. Com a extensão **Live Server** instalada, clique com o botão direito em `index.html` e escolha **Open with Live Server**.
 3. Use o menu da Central para acessar **Ferramentas**, **Design & Cost**, **Inventário** ou **Telemetria**.
 
-A telemetria pode ser explorada em modo simulado. A leitura ao vivo do inversor exige o receptor local configurado separadamente. O checklist de energização está em rascunho para revisão pela equipe.
+A telemetria funciona em modo simulado pelo Live Server e no GitHub Pages. Para ler o inversor ao vivo no Windows:
+
+1. No computador conectado à MCU, execute `telemetria/Abrir_Telemetria_Inversor.bat`. Ele abre a página de telemetria local em `http://127.0.0.1:8791`. Mantenha a janela do receptor aberta durante a leitura.
+2. Em **Dinâmica**, clique em **Usar MCU real** para abrir a bancada com dados da placa. Se estiver no GitHub Pages ou no Live Server, continue em **Abrir telemetria local**. Confira a porta COM do XDS100v2 e clique em **Conectar MCU**. O osciloscópio começa a exibir os sinais da placa.
+3. Clique em **Desconectar MCU** ao terminar para liberar a COM.
+
+O receptor usa o mesmo `foc_debug` do Gerenciador do Inversor. Os **Comandos de bancada** atuam na MCU conectada. **Rodar** e **Calibrar** ficam disponíveis em `IDLE` sem falha ativa, **Parar** solicita a parada e **Limpar falha** fica disponível em `FAULT`. Os parâmetros do firmware permanecem disponíveis para consulta.
+
+Em **MCU real**, ajuste o **Limite de tensão de saída por eixo (V)** e clique em **Aplicar limite**. O ajuste escreve apenas `vmax_frac` e mostra o valor confirmado pela MCU. O limite em volts usa o barramento adotado pelo FOC e a faixa vai até o limite lido ao conectar. A MCU precisa estar sem falha ativa e em um estado que permita a escrita do parâmetro.
+
+Para comandar torque, selecione **Modo torque** se a MCU estiver em velocidade. Uma referência escolhida em `IDLE` é enviada automaticamente quando a MCU entra em `RUN`. Em `RUN`, solte o slider para enviar o valor. O Hub converte Nm em `iq_ref` com os pares de polos e o fluxo informados pela MCU e usa os limites de corrente lidos do firmware.
+
+Em **Enfraquecimento de campo**, acompanhe a contribuição de corrente `fw_id`, a tensão solicitada `|Vdq|` e o limiar que o firmware calcula para o regulador. A linha tracejada mostra esse limiar. Os gráficos exibem as últimas 60 leituras da telemetria.
+
+Se o Gerenciador estiver conectado, desconecte-o para liberar a porta. Caso o FOC esteja em outra pasta, passe a pasta `host` do FOC como argumento ao arquivo `.bat`.
+
+Para iniciar o receptor ao entrar no Windows, coloque um atalho para `Abrir_Telemetria_Inversor.bat` na pasta `shell:startup`. Acrescente `--so-receptor` ao destino do atalho para iniciar sem abrir o navegador. Se o atalho também informar a pasta `host`, coloque `--so-receptor` antes desse caminho.
+
+O checklist de energização está em rascunho para revisão pela equipe.
 
 ## Inventário compartilhado
 

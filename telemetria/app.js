@@ -23,7 +23,6 @@ const state = {
   connectionState: "simulation",
   expectedTransport: "simulation",
   backendUrl: "ws://127.0.0.1:8787/ws",
-  inverterUrl: "ws://127.0.0.1:8787/ws",
   backendMode: null,
   lastPacketAt: null,
   reconnectAttempts: 0,
@@ -59,7 +58,7 @@ const sourceDefinitions = {
   },
   inverter: {
     label: "Inversor F28379D (USB)",
-    note: "Inicie o receptor do inversor, cole a chave da sessão e selecione a porta COM em Dinâmica.",
+    note: "Em Dinâmica, selecione a porta COM e clique em Conectar MCU.",
     footer: "Aguardando telemetria do inversor"
   },
   inverter_demo: {
@@ -246,6 +245,13 @@ const pauseButton = document.getElementById("pauseButton");
 const timer = document.getElementById("sessionTimer");
 const appShell = document.querySelector(".app-shell");
 const mainArea = document.querySelector(".main");
+const hubHeader = document.querySelector(".dashboard-header");
+const sidebar = document.getElementById("telemetrySidebar");
+const sidebarOpenButton = document.getElementById("openTelemetrySidebar");
+const sidebarCloseButton = document.getElementById("closeTelemetrySidebar");
+const sidebarBackdrop = document.getElementById("telemetrySidebarBackdrop");
+const sidebarOverlay = window.matchMedia("(max-width: 900px)");
+const sidebarPreference = "am07-telemetria-sidebar";
 const toast = document.getElementById("toast");
 const connectionCard = document.getElementById("connectionCard");
 const connectionButton = document.getElementById("connectionButton");
@@ -254,12 +260,15 @@ const connectionTransport = document.getElementById("connectionTransport");
 const connectionStateText = document.getElementById("connectionState");
 const connectionModal = document.getElementById("connectionModal");
 const connectionForm = document.getElementById("connectionForm");
+const connectionSubmit = connectionForm.querySelector('button[type="submit"]');
 const connectionClose = document.getElementById("connectionClose");
 const connectionCancel = document.getElementById("connectionCancel");
 const dataSourceSelect = document.getElementById("dataSourceSelect");
 const backendUrlInput = document.getElementById("backendUrl");
 const backendUrlField = document.querySelector(".backend-url-field");
 const connectionSourceNote = document.getElementById("connectionSourceNote");
+const inverterLocalPage = document.getElementById("inverterLocalPage");
+const isInverterLocalPage = location.origin === inverterLocalPage.origin;
 const mqttConnectionSummary = document.getElementById("mqttConnectionSummary");
 const footerConnectionText = document.getElementById("footerConnectionText");
 const footerStatusDot = document.getElementById("footerStatusDot");
@@ -358,7 +367,64 @@ let reconnectTimer = null;
 let staleTimer = null;
 let alertAnnouncementTimer = null;
 let connectionModalTrigger = connectionButton;
-let connectionFormWasInverter = false;
+let desktopSidebarOpen = true;
+let sidebarVisible = true;
+
+try {
+  desktopSidebarOpen = window.localStorage.getItem(sidebarPreference) !== "recolhida";
+} catch {}
+
+function setSidebarVisible(visible) {
+  sidebarVisible = visible;
+  const overlayOpen = sidebarOverlay.matches && visible;
+  appShell.dataset.sidebarOpen = String(visible);
+  sidebar.inert = !visible;
+  sidebarOpenButton.setAttribute("aria-expanded", String(visible));
+  sidebarCloseButton.setAttribute("aria-expanded", String(visible));
+  sidebarBackdrop.hidden = !overlayOpen;
+  mainArea.inert = overlayOpen;
+  hubHeader.inert = overlayOpen || !connectionModal.hidden;
+  document.documentElement.classList.toggle("telemetry-sidebar-modal", overlayOpen);
+  if (overlayOpen) {
+    sidebar.setAttribute("role", "dialog");
+    sidebar.setAttribute("aria-modal", "true");
+  } else {
+    sidebar.removeAttribute("role");
+    sidebar.removeAttribute("aria-modal");
+  }
+}
+
+function toggleSidebar(visible) {
+  if (!sidebarOverlay.matches) {
+    desktopSidebarOpen = visible;
+    try {
+      window.localStorage.setItem(sidebarPreference, visible ? "aberta" : "recolhida");
+    } catch {}
+  }
+  setSidebarVisible(visible);
+  (visible ? sidebarCloseButton : sidebarOpenButton).focus({ preventScroll: true });
+}
+
+setSidebarVisible(!sidebarOverlay.matches && desktopSidebarOpen);
+sidebarOpenButton.addEventListener("click", () => toggleSidebar(true));
+sidebarCloseButton.addEventListener("click", () => toggleSidebar(false));
+sidebarBackdrop.addEventListener("click", () => toggleSidebar(false));
+sidebarOverlay.addEventListener("change", () => {
+  const focused = document.activeElement;
+  setSidebarVisible(!sidebarOverlay.matches && desktopSidebarOpen);
+  if (!sidebarVisible && sidebar.contains(focused)) sidebarOpenButton.focus({ preventScroll: true });
+  if (sidebarVisible && focused === sidebarOpenButton) sidebarCloseButton.focus({ preventScroll: true });
+});
+sidebar.addEventListener("keydown", (event) => {
+  if (!sidebarOverlay.matches || event.key !== "Tab") return;
+  if (event.shiftKey && document.activeElement === sidebarCloseButton) {
+    event.preventDefault();
+    connectionButton.focus();
+  } else if (!event.shiftKey && document.activeElement === connectionButton) {
+    event.preventDefault();
+    sidebarCloseButton.focus();
+  }
+});
 
 function renderHarnessWires() {
   document.querySelectorAll("[data-wire-group]").forEach((group) => {
@@ -502,11 +568,6 @@ chipHarness?.addEventListener("click", (event) => {
 });
 
 wireDetailClose?.addEventListener("click", closeWireDetail);
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && selectedWireKey) {
-    closeWireDetail();
-  }
-});
 
 function renderNavigationAlert(pageId, active, reason = "") {
   const navItem = navItemByPage.get(pageId);
@@ -547,6 +608,13 @@ function queueNavigationAlertAnnouncement(pageId, message) {
   }, 0);
 }
 
+function updateSidebarAlert() {
+  const hasAlert = [...navigationAlertStates.values()].some((value) => value.active);
+  sidebarOpenButton.dataset.alert = String(hasAlert);
+  if (hasAlert) sidebarOpenButton.setAttribute("aria-description", "Há alertas na telemetria.");
+  else sidebarOpenButton.removeAttribute("aria-description");
+}
+
 function setNavigationAlert(pageId, active, reason = "", announce = true) {
   if (!monitoredAlertPages.includes(pageId)) return;
 
@@ -559,6 +627,7 @@ function setNavigationAlert(pageId, active, reason = "", announce = true) {
 
   navigationAlertStates.set(pageId, nextState);
   renderNavigationAlert(pageId, nextState.active, nextState.reason);
+  updateSidebarAlert();
 
   if (announce && stateChanged) {
     const message = nextState.active
@@ -595,6 +664,7 @@ function resetNavigationAlerts() {
     renderNavigationAlert(pageId, false);
   });
   renderNavigationAlert("overview", false);
+  updateSidebarAlert();
   if (alertAnnouncementTimer) clearTimeout(alertAnnouncementTimer);
   alertAnnouncementTimer = null;
   pendingAlertAnnouncements.clear();
@@ -748,7 +818,12 @@ function showPage(pageId) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-navItems.forEach((item) => item.addEventListener("click", () => showPage(item.dataset.page)));
+navItems.forEach((item) => item.addEventListener("click", () => {
+  const fromDrawer = sidebarOverlay.matches && sidebarVisible;
+  if (fromDrawer) setSidebarVisible(false);
+  showPage(item.dataset.page);
+  if (fromDrawer) pageTitle.focus({ preventScroll: true });
+}));
 document.querySelectorAll("[data-go]").forEach((card) => {
   card.addEventListener("click", () => showPage(card.dataset.go));
 });
@@ -900,19 +975,17 @@ function updateConnectionUi(status, detail) {
   compactConnectionButton.title = `${source.label} — ${detail}`;
   compactConnectionButton.setAttribute("aria-label", `Configurar entrada de dados. ${source.label}. ${detail}`);
   recordingIndicator.dataset.state = status;
-  recordingState.textContent = status === "simulation"
-    ? "DEMONSTRAÇÃO"
-    : status === "online"
-      ? "GRAVANDO"
-      : "AGUARDANDO";
+  const recordingLabels = {
+    simulation: "DEMONSTRAÇÃO",
+    online: "GRAVANDO",
+    connecting: "CONECTANDO",
+    offline: "OFFLINE",
+    error: "ERRO"
+  };
+  recordingState.textContent = recordingLabels[status] ?? "AGUARDANDO";
   liveTag.dataset.state = status;
-  liveTag.textContent = status === "simulation"
-    ? "DEMO"
-    : status === "online"
-      ? "LIVE"
-      : status === "error"
-        ? "ERRO"
-        : "WAIT";
+  const liveLabels = { simulation: "DEMO", online: "LIVE", offline: "OFFLINE", error: "ERRO" };
+  liveTag.textContent = liveLabels[status] ?? "WAIT";
 
   if (state.source === "mqtt") {
     const mqttStatus = status === "online"
@@ -937,36 +1010,38 @@ function updateConnectionUi(status, detail) {
 function syncConnectionForm() {
   const sourceId = dataSourceSelect.value;
   const source = sourceDefinitions[sourceId] ?? sourceDefinitions.simulation;
-  const isExternal = !["simulation", "inverter_demo"].includes(sourceId);
+  const isExternal = !["simulation", "inverter_demo", "inverter"].includes(sourceId);
+  const opensLocalPage = sourceId === "inverter" && !isInverterLocalPage;
 
   backendUrlField.hidden = !isExternal;
   backendUrlInput.disabled = !isExternal;
   backendUrlInput.required = isExternal;
-  connectionSourceNote.textContent = source.note;
+  connectionSourceNote.textContent = opensLocalPage
+    ? "Execute Abrir_Telemetria_Inversor.bat no PC conectado à MCU para iniciar o receptor local."
+    : source.note;
+  connectionSubmit.textContent = opensLocalPage ? "Abrir telemetria local" : "Aplicar e conectar";
   mqttConnectionSummary.hidden = sourceId !== "mqtt";
-  const isInverter = sourceId === "inverter";
-  const inverterKey = document.getElementById("inverterKey");
-  document.getElementById("inverterKeyField").hidden = !isInverter;
-  inverterKey.disabled = !isInverter;
-  inverterKey.required = isInverter;
 }
 
 function openConnectionModal(event, sourceId = state.source) {
-  connectionModalTrigger = event?.currentTarget ?? connectionButton;
+  const fromDrawer = sidebarOverlay.matches && sidebarVisible;
+  if (fromDrawer) setSidebarVisible(false);
+  const fallbackTrigger = sidebarVisible ? connectionButton : compactConnectionButton;
+  connectionModalTrigger = fromDrawer ? compactConnectionButton : event?.currentTarget ?? fallbackTrigger;
   dataSourceSelect.value = sourceId;
-  connectionFormWasInverter = sourceId === "inverter";
-  backendUrlInput.value = connectionFormWasInverter ? state.inverterUrl : state.backendUrl;
+  backendUrlInput.value = state.backendUrl;
   syncConnectionForm();
   connectionModal.hidden = false;
   appShell.inert = true;
+  hubHeader.inert = true;
   document.body.style.overflow = "hidden";
   dataSourceSelect.focus();
 }
 
 function closeConnectionModal() {
   connectionModal.hidden = true;
-  document.getElementById("inverterKey").value = "";
   appShell.inert = false;
+  hubHeader.inert = sidebarOverlay.matches && sidebarVisible;
   document.body.style.removeProperty("overflow");
   connectionModalTrigger?.focus();
 }
@@ -1509,14 +1584,8 @@ connectionButton.addEventListener("click", openConnectionModal);
 compactConnectionButton.addEventListener("click", openConnectionModal);
 connectionClose.addEventListener("click", closeConnectionModal);
 connectionCancel.addEventListener("click", closeConnectionModal);
-dataSourceSelect.addEventListener("change", () => {
-  const isInverter = dataSourceSelect.value === "inverter";
-  if (isInverter !== connectionFormWasInverter) {
-    backendUrlInput.value = isInverter ? state.inverterUrl : state.backendUrl;
-    connectionFormWasInverter = isInverter;
-  }
-  syncConnectionForm();
-});
+dataSourceSelect.addEventListener("change", syncConnectionForm);
+
 
 connectionModal.addEventListener("click", (event) => {
   if (event.target === connectionModal) closeConnectionModal();
@@ -1542,7 +1611,10 @@ connectionModal.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !connectionModal.hidden) closeConnectionModal();
+  if (event.key !== "Escape") return;
+  if (!connectionModal.hidden) closeConnectionModal();
+  else if (sidebarOverlay.matches && sidebarVisible) toggleSidebar(false);
+  else if (selectedWireKey) closeWireDetail();
 });
 
 const inverterPanel = createInverterPanel({
@@ -1567,7 +1639,22 @@ function activateInverterDemo() {
   if (location.hash !== "#inversor-demo") history.replaceState(null, "", "#inversor-demo");
 }
 
+function activateInverterUsb() {
+  inverterPanel.stop();
+  disconnectTelemetrySocket(true);
+  state.source = state.expectedTransport = "inverter";
+  document.title = dashboardTitle;
+  prepareExternalTelemetry();
+  inverterPanel.start();
+  showPage("dynamics");
+  if (location.hash !== "#inversor-usb") history.replaceState(null, "", "#inversor-usb");
+}
+
 document.getElementById("startInverterDemo").addEventListener("click", activateInverterDemo);
+document.getElementById("startInverterUsb").addEventListener("click", (event) => {
+  if (!isInverterLocalPage) openConnectionModal(event, "inverter");
+  else if (state.source !== "inverter") activateInverterUsb();
+});
 
 connectionForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1578,24 +1665,12 @@ connectionForm.addEventListener("submit", (event) => {
     activateInverterDemo();
     return;
   }
-  let inverterEndpoint;
-  let inverterKey;
-
   if (sourceId === "inverter") {
-    try {
-      const endpoint = new URL(backendUrlInput.value.trim());
-      if (
-        endpoint.protocol !== "ws:" || endpoint.hostname !== "127.0.0.1" || endpoint.pathname !== "/ws"
-        || endpoint.username || endpoint.password || endpoint.search || endpoint.hash
-      ) throw new Error("Endereço inválido");
-      inverterEndpoint = endpoint.href;
-      inverterKey = document.getElementById("inverterKey").value;
-    } catch {
-      showToast("Para o inversor, use o endereço local exibido no receptor, como ws://127.0.0.1:8787/ws");
-      return;
-    }
+    closeConnectionModal();
+    if (isInverterLocalPage) activateInverterUsb();
+    else location.assign(inverterLocalPage.href);
+    return;
   }
-
   inverterPanel.stop();
   disconnectTelemetrySocket(true);
   document.title = dashboardTitle;
@@ -1608,11 +1683,6 @@ connectionForm.addEventListener("submit", (event) => {
     updateConnectionUi("simulation", "Dados demonstrativos");
     updateTelemetry();
     showToast("Simulação local selecionada");
-  } else if (sourceId === "inverter") {
-    state.inverterUrl = inverterEndpoint;
-    prepareExternalTelemetry();
-    inverterPanel.start(inverterEndpoint, inverterKey);
-    showPage("dynamics");
   } else {
     state.backendUrl = backendUrlInput.value.trim();
     prepareExternalTelemetry();
@@ -1639,6 +1709,6 @@ updateTelemetry();
 if (location.hash === "#inversor-demo") {
   activateInverterDemo();
 } else if (location.hash === "#inversor-usb") {
-  showPage("dynamics");
-  openConnectionModal(undefined, "inverter");
+  if (isInverterLocalPage) activateInverterUsb();
+  else openConnectionModal(undefined, "inverter");
 }

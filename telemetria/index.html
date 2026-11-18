@@ -3,18 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#080a0c">
+  <meta name="theme-color" content="#060b1a">
   <title>UFPR Formula — Telemetria-EV · Protótipo v0.9</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261117-1">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20261117-v09-equipe">
   <link rel="stylesheet" href="../estilos/navegacao.css">
   <link rel="stylesheet" href="../estilos/marca-equipe.css">
 </head>
 <body>
   <header class="dashboard-header">
-    <img class="team-logo is-white" src="../imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR F&oacute;rmula">
+    <div class="telemetry-header-brand">
+      <button class="sidebar-toggle sidebar-open" id="openTelemetrySidebar" type="button" aria-controls="telemetrySidebar"
+        aria-expanded="true" aria-label="Abrir barra lateral" title="Abrir barra lateral">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9 4.5v15"/></svg>
+      </button>
+      <img class="team-logo is-white" src="../imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR F&oacute;rmula">
+    </div>
     <nav aria-label="Navega&ccedil;&atilde;o da Central de El&eacute;trica">
       <ul class="topnav">
         <li><a href="../index.html">Ferramentas</a></li>
@@ -25,15 +31,14 @@
     </nav>
   </header>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-        <div>
-          <small>TELEMETRIA-EV  AM-07</small>
-          <small>By:Kawan Caetani</small>
-        </div>
+    <div class="sidebar-backdrop" id="telemetrySidebarBackdrop" aria-hidden="true" hidden></div>
+    <aside class="sidebar" id="telemetrySidebar" aria-labelledby="telemetrySidebarTitle">
+      <div class="sidebar-heading">
+        <div><strong id="telemetrySidebarTitle">Telemetria</strong><small>AM-07</small></div>
+        <button class="sidebar-toggle" id="closeTelemetrySidebar" type="button" aria-controls="telemetrySidebar"
+          aria-expanded="true" aria-label="Recolher barra lateral" title="Recolher barra lateral">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9 4.5v15"/></svg>
+        </button>
       </div>
 
       <nav class="nav" aria-label="Seções da telemetria">
@@ -70,8 +75,6 @@
           <span>Monitoramento do chicote</span>
         </button>
       </nav>
-      <div class="sr-only" id="telemetryAlertAnnouncer" role="status" aria-live="polite" aria-atomic="true"></div>
-
       <div class="sidebar-bottom">
         <div class="connection-card" id="connectionCard" data-state="simulation">
           <div class="connection-row">
@@ -84,15 +87,16 @@
           </div>
           <button id="connectionButton" type="button">Configurar entrada</button>
         </div>
-        <div class="version">PROTÓTIPO UI · v0.9</div>
+        <div class="version">v0.9 · Kawan Caetani</div>
       </div>
     </aside>
 
+    <div class="sr-only" id="telemetryAlertAnnouncer" role="status" aria-live="polite" aria-atomic="true"></div>
     <main class="main">
       <header class="topbar">
         <div>
           <p class="eyebrow">SESSÃO AO VIVO</p>
-          <h1 id="pageTitle">Visão geral</h1>
+          <h1 id="pageTitle" tabindex="-1">Visão geral</h1>
         </div>
         <div class="topbar-actions">
           <div class="session-timer">
@@ -324,7 +328,10 @@
       <section class="page" id="dynamics">
         <div class="section-heading">
           <div><span class="section-index">04</span><h2>Dinâmica</h2></div>
-          <button class="primary-button inverter-demo-entry" type="button" id="startInverterDemo">Simular inversor</button>
+          <div class="inverter-source-actions">
+            <button class="secondary-button inverter-demo-entry" type="button" id="startInverterDemo">Simular inversor</button>
+            <button class="primary-button inverter-demo-entry" type="button" id="startInverterUsb">Usar MCU real</button>
+          </div>
         </div>
         <div class="dynamics-grid">
           <article class="sensor-card vehicle-attitude">
@@ -353,8 +360,8 @@
               <div><small>CORRENTE Iq</small><strong><span data-value="inverter-iq">--</span> <em>A</em></strong></div>
               <div><small>BARRAMENTO CC</small><strong><span data-value="inverter-vbus">--</span> <em>V</em></strong></div>
             </div>
-            <div id="inverterDemoControls" hidden>
-              <form class="inverter-toolbar inverter-reference" id="inverterDemoForm">
+            <div id="inverterBenchControls" hidden>
+              <form class="inverter-toolbar inverter-reference" id="inverterDemoForm" hidden>
                 <label>Modo de controle
                   <select id="inverterDemoMode"><option value="1">Velocidade</option><option value="0">Torque</option></select>
                 </label>
@@ -371,6 +378,35 @@
                 <label>Limite de Iq (A) <input id="inverterDemoCurrent" type="number" min="0" max="12" step="any" required></label>
                 <label>Carga simulada (%) <input id="inverterDemoLoad" type="number" min="0" max="100" step="1" required></label>
                 <button class="primary-button" type="submit">Aplicar referências</button>
+              </form>
+              <div class="inverter-toolbar inverter-reference" id="inverterTorqueControl" hidden>
+                <label>Modo da MCU <output id="inverterTorqueModeValue">--</output></label>
+                <button class="secondary-button" id="inverterTorqueMode" type="button" disabled>Selecionar modo torque</button>
+                <div class="inverter-reference-value">
+                  <label>Referência de torque (Nm) <input id="inverterTorqueInput" type="number" step="any" disabled></label>
+                  <input id="inverterTorqueSlider" type="range" min="0" max="0" step="any" value="0"
+                    aria-label="Ajustar referência de torque em newton-metros" aria-describedby="inverterTorqueHelp" disabled>
+                  <div class="inverter-range-labels">
+                    <span>Referência lida <span id="inverterTorqueApplied">--</span></span>
+                    <span>Iq lida <span id="inverterTorqueIq">--</span></span>
+                  </div>
+                  <p class="inverter-status" id="inverterTorqueHelp"></p>
+                </div>
+                <p class="inverter-status" id="inverterTorqueStatus" role="status"></p>
+              </div>
+              <form class="inverter-toolbar inverter-reference" id="inverterVoltageForm" hidden>
+                <div class="inverter-reference-value">
+                  <label for="inverterVoltageSlider">Limite de tensão de saída por eixo (V)</label>
+                  <input id="inverterVoltageSlider" type="range" min="0" max="0" step="any" value="0"
+                    aria-describedby="inverterVoltageHelp" disabled>
+                  <div class="inverter-range-labels">
+                    <span>Selecionado <output id="inverterVoltageSelected" for="inverterVoltageSlider">--</output></span>
+                    <span>Aplicado <span id="inverterVoltageApplied">--</span></span>
+                  </div>
+                  <p class="inverter-status" id="inverterVoltageHelp"></p>
+                </div>
+                <button class="primary-button" id="inverterVoltageApply" type="submit" disabled>Aplicar limite</button>
+                <p class="inverter-status" id="inverterVoltageStatus" role="status"></p>
               </form>
             </div>
           </article>
@@ -397,6 +433,7 @@
             <button type="button" class="secondary-button" id="inverterDisconnect" disabled>Desconectar MCU</button>
           </div>
           <p class="inverter-status" id="inverterStatus" role="status"></p>
+          <p class="inverter-status"><a id="inverterLocalPage" href="http://127.0.0.1:8791/telemetria/#inversor-usb" hidden>Abrir telemetria local</a></p>
           <div class="metric-row three">
             <div><small>BARRAMENTO CC</small><strong><span data-value="inverter-vbus">--</span> <em>V</em></strong></div>
             <div><small>FALHAS DO INVERSOR</small><strong id="inverterFault">--</strong></div>
@@ -412,6 +449,17 @@
               <button type="submit" class="primary-button" id="inverterWrite" disabled>Gravar no MCU</button>
             </form>
             <p class="inverter-status" id="inverterParamHelp">O catálogo é carregado ao conectar o MCU.</p>
+          </details>
+          <details class="inverter-details" id="inverterFieldWeakening" open hidden>
+            <summary>Enfraquecimento de campo</summary>
+            <p class="inverter-status" id="inverterFieldStatus"></p>
+            <div class="metric-row three">
+              <div><small>Id DO REGULADOR</small><strong><span id="inverterFieldId">--</span> <em>A</em></strong></div>
+              <div><small>|Vdq| SOLICITADA</small><strong><span id="inverterFieldVoltage">--</span> <em>V</em></strong></div>
+              <div><small>LIMIAR DO FW</small><strong><span id="inverterFieldTarget">--</span> <em>V</em></strong></div>
+            </div>
+            <p class="inverter-status" id="inverterFieldLegend" hidden>Últimas 60 leituras da MCU. No gráfico de tensão, a linha tracejada marca o limiar do FW.</p>
+            <div class="inverter-plots" id="inverterFieldPlots"></div>
           </details>
           <details class="inverter-details" id="inverterScopeDetails">
             <summary>Osciloscópio</summary>
@@ -433,8 +481,8 @@
           <details class="inverter-details" id="inverterCommandDetails">
             <summary>Comandos de bancada</summary>
             <div class="inverter-toolbar" id="inverterCommands">
-              <button class="secondary-button" type="button" data-inverter-command="align" disabled>Calibrar / alinhar</button>
               <button class="primary-button" type="button" data-inverter-command="run" disabled>Rodar</button>
+              <button class="secondary-button" type="button" data-inverter-command="align" disabled>Calibrar</button>
               <button class="secondary-button" type="button" data-inverter-command="stop" disabled>Parar</button>
               <button class="secondary-button" type="button" data-inverter-command="clear_fault" disabled>Limpar falha</button>
               <button class="secondary-button" type="button" data-inverter-command="inject_fault" id="inverterInjectFault" hidden disabled>Simular falha</button>
@@ -461,7 +509,7 @@
                   </linearGradient>
                   <linearGradient id="tubeEdge" x1="0" x2="1" y1="0" y2="0">
                     <stop offset="0" stop-color="#c7d0d4" stop-opacity=".88"/>
-                    <stop offset=".55" stop-color="#deff47" stop-opacity=".46"/>
+                    <stop offset=".55" stop-color="#f4c430" stop-opacity=".46"/>
                     <stop offset="1" stop-color="#4dbde8" stop-opacity=".68"/>
                   </linearGradient>
                   <filter id="pointGlow" x="-70%" y="-70%" width="240%" height="240%">
@@ -914,11 +962,6 @@
           <input id="backendUrl" name="backendUrl" type="url" value="ws://127.0.0.1:8787/ws" spellcheck="false" autocomplete="off">
         </label>
 
-        <label class="connection-field" id="inverterKeyField" for="inverterKey" hidden>
-          <span>Chave de sessão exibida no receptor do inversor</span>
-          <input id="inverterKey" type="password" pattern="[0-9a-f]{32}" autocomplete="off" spellcheck="false" disabled>
-        </label>
-
         <div class="connection-source-note" id="connectionSourceNote">
           A simulação funciona sem hardware e mantém os valores demonstrativos da interface.
         </div>
@@ -972,8 +1015,9 @@
     }
   </script>
   <script src="inverter-demo.js?v=20261117-1"></script>
-  <script src="inverter-scope.js?v=20261117-1"></script>
-  <script src="inverter.js?v=20261117-1"></script>
-  <script src="app.js?v=20261111-4"></script>
+  <script src="inverter-scope.js?v=20261117-v09-bancada"></script>
+  <script src="inverter-serial.js?v=20261117-v09-torque"></script>
+  <script src="inverter.js?v=20261117-v09-torque-auto"></script>
+  <script src="app.js?v=20261117-v09-equipe"></script>
 </body>
 </html>

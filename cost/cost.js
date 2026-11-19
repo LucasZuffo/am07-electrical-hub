@@ -115,7 +115,7 @@
   function exportCsv(){
     if(!comparison)return;
     const records=ownRows(), extra=['Qtd por pai usada','Qtd para 1 carro','Item inventário','Código inventário','Saldo inventário','Unidade inventário','Demanda agrupada HV+EL','Falta agrupada HV+EL','Datasheet no inventário','Custo unitário usado (R$)','Total calculado (R$)','Pendências'];
-    const cell=value=>{let text=String(value??'');if(/^[=+\-@]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
+    const cell=value=>{let text=typeof value==='number'?String(value).replace('.',','):String(value??'');if(/^[=+\-@]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
     const rows=[source.originalColumns.concat(extra),...records.map(r=>source.originalColumns.map(c=>r.original[c]??'').concat([r.ownQuantity,r.carQuantity,r.item?.name,r.item?.sku,r.group?.stockKnown?r.item.quantity:'',r.item?.unit,r.group?.known?r.group.need:'',r.group?.shortage,r.applicable?r.hasDatasheet?'Sim':'Não':'',r.unitCost,r.cost,r.issues.map(i=>labels[i]).join(' / ')]))];
     const blob=new Blob(['\uFEFF'+rows.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`am07-cost-${department.toLowerCase()}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }

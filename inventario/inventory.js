@@ -270,7 +270,7 @@
       id,
       name,
       sku: normalizeWhitespace(raw.sku ?? raw.code ?? raw.partNumber, 40),
-      category,
+      category: ["consumivel", "consumiveis"].includes(normalizeSearch(category)) ? "Consumíveis" : category,
       departments: ["EL", "HV"].filter((department) => (Array.isArray(raw.departments) ? raw.departments : String(raw.department ?? "").split(",")).includes(department)),
       quantity: finiteNumber(raw.quantity),
       quantityKnown: raw.quantityKnown !== false,
@@ -891,7 +891,7 @@
 
   function updateCategoryFilter() {
     const selected = elements.categoryFilter.value;
-    const categories = Array.from(new Set(items.map((item) => item.category))).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const categories = Array.from(new Set(["Consumíveis", ...items.map((item) => item.category)])).sort((a, b) => a.localeCompare(b, "pt-BR"));
     elements.categoryFilter.replaceChildren();
     const all = document.createElement("option");
     all.value = "all";

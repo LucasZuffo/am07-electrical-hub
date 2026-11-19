@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060b1a"><title>Cost do AM-07 | UFPR Fórmula</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../estilos/navegacao.css"><link rel="stylesheet" href="../estilos/marca-equipe.css">
+  <link rel="stylesheet" href="styles.css?v=20261119-cost">
+</head>
+<body>
+  <header class="dashboard-header">
+    <img class="team-logo is-white" src="../imagens/logo-ufpr-formula-branca.png" width="124" height="40" alt="UFPR Fórmula">
+    <nav aria-label="Navegação da Central de Elétrica"><ul class="topnav">
+      <li><a href="../index.html">Ferramentas</a></li><li><a href="../design/design-cost.html">Design</a></li><li><a href="index.html" aria-current="page">Cost</a></li><li><a href="../inventario/index.html">Inventário</a></li><li><a href="../telemetria/index.html">Telemetria</a></li>
+    </ul></nav>
+  </header>
+  <main class="cost-shell">
+    <header class="cost-heading"><div><p class="eyebrow">AM-07</p><h1>Cost do carro</h1><p>Estrutura de peças de HV e EL, custos e disponibilidade no inventário.</p></div><button id="refresh" type="button">Atualizar inventário</button></header>
+    <p id="connection" class="connection" role="status">Carregando planejamento e estoque compartilhado…</p>
+    <div class="department-tabs" role="tablist" aria-label="Gerência do Cost"><button role="tab" id="tabHV" aria-selected="true" aria-controls="departmentPanel" data-department="HV">HV <span>103 linhas</span></button><button role="tab" id="tabEL" aria-selected="false" aria-controls="departmentPanel" data-department="EL" tabindex="-1">EL <span>10 linhas</span></button></div>
+    <section id="departmentPanel" role="tabpanel" aria-labelledby="tabHV">
+      <div id="summary" class="summary" aria-label="Resumo da gerência"></div>
+      <section class="cost-controls" aria-label="Filtros do Cost">
+        <label class="search-label">Buscar no Cost<input id="search" type="search" placeholder="Código, peça ou conjunto"></label>
+        <label>Pendência<select id="issue"><option value="all">Todas as linhas</option><option value="unlinked">Sem vínculo no inventário</option><option value="datasheet">Sem datasheet</option><option value="shortage">Falta de quantidade</option><option value="quantity">Quantidade a definir</option><option value="unit">Unidade a conferir</option><option value="count">Estoque sem contagem</option><option value="price">Preço a preencher</option></select></label>
+        <label>Tipo<select id="type"><option value="all">Todos os tipos</option><option value="A">A · Assembly</option><option value="F">F · Fabricada</option><option value="B">B · Comprada</option><option value="FS">FS · Fixador</option><option value="C">C · Consumível</option></select></label>
+        <button id="export" type="button">Exportar CSV</button>
+      </section>
+      <p class="basis">Qtd. por pai × quantidades dos conjuntos = necessidade para <strong>1 carro</strong>. Conjuntos sem quantidade permanecem pendentes.</p>
+      <p id="viewCount" class="view-count"></p>
+      <div class="table-scroll" role="region" aria-label="Estrutura e comparação do Cost" tabindex="0"><table><thead><tr><th class="part-cell" scope="col">Código e estrutura</th><th scope="col">Tipo</th><th scope="col">Qtd.<br>por pai</th><th scope="col">Qtd.<br>no carro</th><th scope="col">Inventário / necessidade</th><th scope="col">Pendências</th><th scope="col">Custo unit.<br>por un. Cost</th><th scope="col">Total no carro</th><th scope="col">Ação</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <p id="empty" class="empty" hidden>Nenhuma linha encontrada com esses filtros.</p>
+    </section>
+    <details class="source-note"><summary>Como a comparação funciona e dados da planilha</summary>
+      <p>Fonte: AM-07 - Parts &amp; Cost Management.xlsx, aba 01. Track Parts. O CSV enviado contém os mesmos dados. Foram importadas 103 linhas de HV e 10 de EL, preservando códigos, códigos pais, níveis e tipos. Conjuntos de outra gerência aparecem apenas como contexto.</p>
+      <p>A associação automática exige um código único e igual no inventário. Use “Editar / vincular” para escolher uma peça existente. “Sem vínculo” pede conferência e pode significar que o item ainda precisa ser cadastrado. A vinculação não altera o código nem o saldo do inventário.</p>
+      <p>Quando uma peça atende várias linhas de HV e EL, a demanda é somada antes de comparar com o saldo. A falta mostrada é do grupo, sem reservar estoque. Quantidade desconhecida ou unidade diferente deixa a comparação pendente. A conversão de unidades precisa ser informada na vinculação.</p>
+      <p>A planilha não contém preços. Informe o custo unitário no Cost ou use o custo cadastrado no inventário, com unidade compatível. O total considera peças, fixadores e consumíveis. Assemblies organizam a estrutura e não são somados novamente. Valores sem quantidade ou preço ficam fora do subtotal conhecido e são sinalizados.</p>
+      <p>“Sem datasheet” significa que não há PDF anexado nem link cadastrado no item vinculado. O conteúdo e a disponibilidade de links externos precisam ser conferidos ao abrir o documento.</p>
+    </details>
+  </main>
+  <dialog id="editor" aria-labelledby="editorTitle">
+    <form id="editForm"><div class="dialog-heading"><div><p id="editorCode" class="eyebrow"></p><h2 id="editorTitle">Editar linha</h2></div><button type="button" id="closeEditor" aria-label="Fechar edição">×</button></div>
+      <p id="editorContext" class="muted"></p>
+      <div class="edit-grid">
+        <label><span id="quantityLabel">Quantidade por unidade do pai</span><input id="editQuantity" type="number" min="0" max="1000000000" step="any" placeholder="Usar quantidade da planilha"><small id="sourceQuantity"></small></label>
+        <label id="priceField">Custo unitário no Cost (R$)<input id="editPrice" type="number" min="0" max="1000000000" step="any" placeholder="Usar custo do inventário"><small>Em branco: usar o valor do item vinculado, quando informado.</small></label>
+        <label class="wide" id="inventoryField">Item do inventário<select id="editInventory"></select><small>O vínculo é compartilhado com a equipe. O saldo do inventário permanece igual.</small></label>
+        <label class="wide" id="conversionField">Unidades do inventário por unidade do Cost<input id="editConversion" type="number" min="0.000001" max="1000000000" step="any" placeholder="1 quando as unidades são iguais"><small>Ex.: 1 kit no Cost contém 4 un do inventário → informe 4. Sem conversão, unidades diferentes ficam pendentes.</small></label>
+      </div>
+      <details class="original-data"><summary>Dados originais desta linha</summary><dl id="originalData"></dl></details>
+      <p id="editorError" class="error" role="alert"></p>
+      <div class="dialog-actions"><a href="../inventario/index.html" target="_blank" rel="noopener">Abrir inventário</a><button type="button" id="cancelEditor">Cancelar</button><button type="submit" id="saveEditor" class="primary">Salvar planejamento</button></div>
+    </form>
+  </dialog>
+  <div id="toast" role="status" class="toast" hidden></div>
+  <script src="../inventario/cloud-config.js?v=20261119-firebase"></script><script src="../inventario/firebase-cloud.js?v=20261119-firebase"></script>
+  <script src="cost-source.js?v=20261119-cost"></script><script src="cost-model.js?v=20261119-cost"></script><script src="cost.js?v=20261119-cost"></script>
+</body></html>

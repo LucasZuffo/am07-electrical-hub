@@ -22,6 +22,8 @@
     emptyAdd: document.getElementById("inventoryEmptyAddButton"),
     search: document.getElementById("inventorySearch"),
     categoryFilter: document.getElementById("inventoryCategoryFilter"),
+    departmentFilter: document.getElementById("inventoryDepartmentFilter"),
+    department: document.getElementById("inventoryDepartment"),
     stockFilter: document.getElementById("inventoryStockFilter"),
     sort: document.getElementById("inventorySort"),
     result: document.getElementById("inventoryResultText"),
@@ -269,6 +271,7 @@
       name,
       sku: normalizeWhitespace(raw.sku ?? raw.code ?? raw.partNumber, 40),
       category,
+      departments: ["EL", "HV"].filter((department) => (Array.isArray(raw.departments) ? raw.departments : String(raw.department ?? "").split(",")).includes(department)),
       quantity: finiteNumber(raw.quantity),
       quantityKnown: raw.quantityKnown !== false,
       unit: validUnits.has(raw.unit) ? raw.unit : "un",
@@ -751,11 +754,13 @@
     const terms = normalizeSearch(elements.search.value).split(/\s+/).filter(Boolean);
     const category = elements.categoryFilter.value;
     const stock = elements.stockFilter.value;
+    const department = elements.departmentFilter.value;
     const filtered = items.filter((item) => {
       const haystack = normalizeSearch([
         item.name,
         item.sku,
         item.category,
+        ...item.departments,
         item.manufacturer,
         item.location,
         item.notes,
@@ -764,6 +769,7 @@
       ].join(" "));
       return terms.every((term) => haystack.includes(term))
         && (category === "all" || item.category === category)
+        && (department === "all" || department === "none" && !item.departments.length || department === "both" && item.departments.length === 2 || item.departments.includes(department))
         && (stock === "all" || stockState(item) === stock);
     });
 
@@ -875,7 +881,10 @@
     remove.setAttribute("aria-label", `Excluir ${item.name}`);
     actions.append(edit, remove);
 
-    content.append(top, code, meta, quantity, actions);
+    const department = makeElement("div", "inventory-department");
+    department.dataset.department = item.departments.join("-") || "none";
+    department.append(makeElement("small", "", "GERÊNCIA"), makeElement("strong", "", item.departments.join(" + ") || "NÃO DEFINIDA"));
+    content.append(top, department, code, meta, quantity, actions);
     card.append(content);
     return card;
   }
@@ -960,6 +969,7 @@
     elements.search.value = "";
     elements.categoryFilter.value = "all";
     elements.stockFilter.value = "all";
+    elements.departmentFilter.value = "all";
     elements.sort.value = "updated";
     renderInventory();
     elements.search.focus();
@@ -1028,6 +1038,7 @@
       elements.name.value = item.name;
       elements.sku.value = item.sku;
       elements.category.value = item.category;
+      elements.department.value = item.departments.join(",");
       elements.quantity.value = item.quantityKnown === false ? "" : item.quantity;
       elements.unit.value = item.unit;
       elements.minimum.value = item.minimumKnown === false ? "" : item.minimum;
@@ -1041,7 +1052,7 @@
         draftDatasheetMetadata = { fileName: item.datasheetName || "datasheet.pdf", size: item.datasheetSize };
         showDraftDatasheet(draftDatasheetMetadata, "salvo localmente neste navegador");
       } else if (item.datasheetUrl) {
-        showDraftDatasheet(null, "Link externo do fabricante cadastrado.");
+        showDraftDatasheet(null, "Link externo do datasheet cadastrado.");
       }
 
     }
@@ -1151,6 +1162,7 @@
       name: elements.name.value,
       sku: elements.sku.value,
       category: elements.category.value,
+      departments: elements.department.value ? elements.department.value.split(",") : [],
       quantity: elements.quantity.value,
       quantityKnown: elements.quantity.value.trim() !== "",
       unit: elements.unit.value,
@@ -1724,7 +1736,7 @@
         inventorySheet,
         "ESTOQUE COMPLETO",
         `Todos os componentes · filtros disponíveis nos cabeçalhos · gerado em ${generatedLabel}`,
-        "S"
+        "T"
       );
       const inventoryRows = reportItems.map((item) => {
         const hasCount = item.quantityKnown !== false;
@@ -1745,7 +1757,7 @@
           hasCount && hasCost ? item.quantity * item.unitCost : "",
           datasheetType, item.hasDatasheet ? item.datasheetName || "PDF anexado" : "",
           item.datasheetUrl ? "Abrir link" : "", item.notes,
-          reportDate(item.createdAt), reportDate(item.updatedAt)
+          reportDate(item.createdAt), reportDate(item.updatedAt), item.departments.join(" + ") || "Não definida"
         ];
       });
       const inventoryTable = addReportTable(inventorySheet, {
@@ -1754,10 +1766,10 @@
           "Situação", "Código / PN", "Componente", "Tipo", "Fabricante", "Localização",
           "Quantidade", "Unidade", "Estoque mínimo", "Saldo vs. mínimo", "Déficit para mínimo",
           "Custo unitário (R$)", "Valor em estoque (R$)", "Datasheet",
-          "Nome do PDF", "Link do datasheet", "Observações", "Criado em", "Atualizado em"
+          "Nome do PDF", "Link do datasheet", "Observações", "Criado em", "Atualizado em", "Gerência"
         ],
         rows: inventoryRows,
-        widths: [17, 18, 28, 22, 22, 22, 13, 11, 15, 16, 18, 18, 20, 16, 28, 18, 38, 19, 19]
+        widths: [17, 18, 28, 22, 22, 22, 13, 11, 15, 16, 18, 18, 20, 16, 28, 18, 38, 19, 19, 18]
       });
       styleStatusColumn(inventorySheet, reportItems, inventoryTable.firstDataRow, 1);
       [7, 9, 10, 11].forEach((column) => { inventorySheet.getColumn(column).numFmt = "#,##0.00"; });
@@ -1876,7 +1888,7 @@
   }
 
   function exportCsv() {
-    const headers = ["Situação", "Código", "Nome", "Tipo", "Fabricante", "Localização", "Quantidade", "Unidade", "Estoque mínimo", "Custo unitário (R$)", "Valor em estoque (R$)", "Datasheet", "Atualizado em"];
+    const headers = ["Situação", "Código", "Nome", "Tipo", "Fabricante", "Localização", "Quantidade", "Unidade", "Estoque mínimo", "Custo unitário (R$)", "Valor em estoque (R$)", "Datasheet", "Atualizado em", "Gerência"];
     const rows = items.map((item) => [
       stockStatusLabel(item),
       item.sku,
@@ -1890,7 +1902,7 @@
       item.unitCostKnown === false ? "" : item.unitCost.toFixed(2).replace(".", ","),
       item.quantityKnown === false || item.unitCostKnown === false ? "" : (item.unitCost * item.quantity).toFixed(2).replace(".", ","),
       item.hasDatasheet ? item.datasheetName || "PDF anexado" : item.datasheetUrl,
-      new Date(item.updatedAt).toLocaleString("pt-BR")
+      new Date(item.updatedAt).toLocaleString("pt-BR"), item.departments.join(" + ") || "Não definida"
     ]);
     const csv = [headers, ...rows].map((row) => row.map(safeCsvCell).join(";")).join("\r\n");
     const date = new Date().toISOString().slice(0, 10);
@@ -2082,6 +2094,7 @@
   });
   elements.categoryFilter.addEventListener("change", renderInventory);
   elements.stockFilter.addEventListener("change", renderInventory);
+  elements.departmentFilter.addEventListener("change", renderInventory);
   elements.sort.addEventListener("change", renderInventory);
 
   elements.list.addEventListener("click", (event) => {

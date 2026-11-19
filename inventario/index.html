@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Oswald:wght@500;600;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../estilos/navegacao.css">
   <link rel="stylesheet" href="../estilos/marca-equipe.css">
-  <link rel="stylesheet" href="styles.css?v=20261116-sem-imagens">
+  <link rel="stylesheet" href="styles.css?v=20261119-gerencia">
 </head>
 <body>
   <header class="dashboard-header">
@@ -18,7 +18,8 @@
     <nav aria-label="Navega&ccedil;&atilde;o da Central de El&eacute;trica">
       <ul class="topnav">
         <li><a href="../index.html">Ferramentas</a></li>
-        <li><a href="../design/design-cost.html">Design &amp; Cost</a></li>
+        <li><a href="../design/design-cost.html">Design</a></li>
+        <li><a href="../cost/index.html">Cost</a></li>
         <li><a href="index.html" aria-current="page">Invent&aacute;rio</a></li>
         <li><a href="../telemetria/index.html">Telemetria</a></li>
       </ul>
@@ -50,6 +51,16 @@
                 <input id="inventorySearch" type="search" aria-label="Buscar componentes no estoque" placeholder="Buscar no estoque" autocomplete="off">
               </label>
 
+              <label class="inventory-select" for="inventoryDepartmentFilter">
+                <span>GERÊNCIA</span>
+                <select id="inventoryDepartmentFilter">
+                  <option value="all">Todas as gerências</option>
+                  <option value="EL">EL</option>
+                  <option value="HV">HV</option>
+                  <option value="both">EL e HV</option>
+                  <option value="none">Sem gerência definida</option>
+                </select>
+              </label>
               <label class="inventory-select" for="inventoryCategoryFilter">
                 <span>TIPO</span>
                 <select id="inventoryCategoryFilter">
@@ -218,6 +229,15 @@
               </datalist>
             </label>
 
+            <label class="inventory-field inventory-field-wide" for="inventoryDepartment">
+              <span>Gerência do componente</span>
+              <select id="inventoryDepartment" name="department">
+                <option value="">Não definida</option>
+                <option value="EL">EL · Elétrica</option>
+                <option value="HV">HV · Alta tensão</option>
+                <option value="EL,HV">EL e HV · Compartilhado</option>
+              </select>
+            </label>
             <label class="inventory-field" for="inventoryQuantity">
               <span>Quantidade atual</span>
               <input id="inventoryQuantity" name="quantity" type="number" min="0" max="1000000000" step="0.01" placeholder="Vazio = sem contagem">
@@ -286,8 +306,9 @@
                 <button class="inventory-remove-datasheet" id="inventoryRemoveDatasheet" type="button" hidden>Remover PDF</button>
               </div>
               <label class="inventory-datasheet-url" for="inventoryDatasheetUrl">
-                <span>OU LINK DO FABRICANTE</span>
-                <input id="inventoryDatasheetUrl" name="datasheetUrl" type="url" maxlength="500" inputmode="url" placeholder="https://fabricante.com/datasheet.pdf">
+                <span>OU LINK DO DATASHEET</span>
+                <input id="inventoryDatasheetUrl" name="datasheetUrl" type="url" maxlength="500" inputmode="url" placeholder="https://…/datasheet.pdf" aria-describedby="inventoryDatasheetLinkHelp">
+                <small id="inventoryDatasheetLinkHelp">Cole um link do fabricante, do GitHub Pages ou de outro local público. O PDF permanece nesse endereço. Anexar PDF envia o arquivo ao banco compartilhado.</small>
               </label>
             </section>
           </aside>
@@ -304,6 +325,6 @@
   <script src="inventory-seed.js?v=20260822-1"></script>
   <script src="cloud-config.js?v=20261119-firebase"></script>
   <script src="firebase-cloud.js?v=20261119-firebase"></script>
-  <script src="inventory.js?v=20261119-firebase"></script>
+  <script src="inventory.js?v=20261119-gerencia"></script>
 </body>
 </html>

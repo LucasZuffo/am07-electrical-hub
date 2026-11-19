@@ -1,0 +1,5 @@
+{
+  "database": {
+    "rules": "inventario/firebase.rules.json"
+  }
+}

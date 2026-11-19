@@ -30,11 +30,24 @@ O checklist de energização está em rascunho para revisão pela equipe.
 
 ## Inventário compartilhado
 
-O inventário usa o navegador enquanto a URL e a chave publicável estiverem vazias em `inventario/cloud-config.js`. Para usar o mesmo estoque no celular e no computador:
+O inventário está conectado ao Firebase Realtime Database do projeto `inventario-am-07`. O provedor é selecionado em `inventario/cloud-config.js`, que também aceita Supabase. Sem um provedor configurado, os dados ficam no navegador.
+
+### Firebase Realtime Database
+
+1. Baixe um **Backup JSON** do estoque atual antes de trocar o provedor.
+2. Crie um Realtime Database no projeto Firebase e publique as regras de `inventario/firebase.rules.json`. Pelo Firebase CLI, use `firebase deploy --only database --project ID_DO_PROJETO` na pasta do Hub.
+3. Importe o estoque atual em `/am07Inventory/stock`, com `schemaVersion: 3`, `revision` maior que zero e `items`. A primeira abertura de um banco vazio carrega os componentes iniciais do repositório.
+4. Em `inventario/cloud-config.js`, selecione `provider: "firebase"` e preencha `databaseURL` com a URL exibida no Realtime Database. Publique o site depois de conferir a importação.
+
+As regras mantêm o inventário compartilhado por link. Quem tem o link pode consultar e editar componentes e PDFs. O restante do banco fica fechado. As gravações usam uma revisão e uma condição de versão para proteger alterações simultâneas. Os ajustes de quantidade fazem até cinco tentativas em caso de conflito. Os PDFs continuam limitados a 10 MB e ficam separados dos dados do estoque. A consulta periódica baixa apenas a revisão quando os componentes continuam iguais.
+
+### Supabase
+
+Para configurar um projeto Supabase:
 
 1. Antes de ativar, baixe um **Backup JSON** em cada navegador que já tenha cadastros para migrar.
 2. Crie um projeto no Supabase e execute `inventario/supabase.sql` no **SQL Editor**.
-3. Preencha `inventario/cloud-config.js` com o **Project URL** e a **Publishable key** (prefixo `sb_publishable_`) do diálogo **Connect**. Esses dois valores podem ser publicados no GitHub Pages. Guarde as chaves secretas e a senha do banco no Supabase.
+3. Em `inventario/cloud-config.js`, selecione `provider: "supabase"` e preencha o **Project URL** e a **Publishable key** (prefixo `sb_publishable_`) do diálogo **Connect**. Esses dois valores podem ser publicados no GitHub Pages. Guarde as chaves secretas e a senha do banco no Supabase.
 4. Publique o site e abra a página **Inventário**. O primeiro acesso carrega os componentes iniciais. Use **Importar JSON** para migrar seus backups. A opção de adicionar itens novos ignora itens que já existem. Para migrar também alterações de quantidade ou anexos de itens existentes, use como base o backup completo do navegador que tem o estoque correto e confirme a substituição.
 
 O estoque é consultado ao voltar para a página e a cada 15 segundos enquanto ela está visível. Ajustes pelos botões de quantidade são aplicados no banco, e formulários ou importações com uma revisão antiga recebem um aviso de conflito. Qualquer pessoa com acesso ao site pode consultar e editar o inventário, inclusive baixar fichas técnicas e excluir componentes. Para atualizar um projeto existente, execute novamente o SQL do passo 2. O script apaga as fotos antigas do catálogo no Supabase e preserva os componentes, saldos e datasheets em PDF.

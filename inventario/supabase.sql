@@ -69,7 +69,10 @@ begin
   update inventory_private.stock set items = p_items, revision = revision + 1
     where revision = p_revision;
   if not found then
-    raise exception 'O estoque mudou em outro dispositivo' using errcode = '40001';
+    -- Keep the published client's conflict code without raising a retryable SQLSTATE.
+    raise sqlstate 'PGRST' using
+      message = '{"code":"40001","message":"O estoque mudou em outro dispositivo"}',
+      detail = '{"status":409,"headers":{}}';
   end if;
 
   for attachment in select value from jsonb_array_elements(p_attachments) loop
@@ -112,7 +115,11 @@ begin
   select items into current_items from inventory_private.stock where singleton = true for update;
   select value, (ordinality - 1)::integer into current_item, item_index
     from jsonb_array_elements(current_items) with ordinality where value->>'id' = p_id;
-  if not found then raise exception 'Componente excluído em outro dispositivo' using errcode = '40001'; end if;
+  if not found then
+    raise sqlstate 'PGRST' using
+      message = '{"code":"40001","message":"Componente excluído em outro dispositivo"}',
+      detail = '{"status":409,"headers":{}}';
+  end if;
   if current_item->>'quantityKnown' = 'false' and p_delta = -1 then
     return public.am07_inventory_read();
   end if;

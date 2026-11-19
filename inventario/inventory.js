@@ -107,12 +107,15 @@
   let searchTimer = null;
   let pendingExternalInventoryUpdate = false;
   const cloudConfig = window.AM07_INVENTORY_CLOUD;
-  const cloudEnabled = Boolean(cloudConfig?.url || cloudConfig?.publishableKey);
+  const cloudEnabled = Boolean(cloudConfig?.provider === "firebase" || cloudConfig?.url || cloudConfig?.publishableKey);
   const stagedAttachments = new Map();
   let cloudReady = false;
   let cloudRequest = null;
 
   async function cloudRpc(name, parameters) {
+    if (cloudConfig?.provider === "firebase") {
+      return window.AM07_FIREBASE_INVENTORY(name, parameters);
+    }
     const url = new URL("/rest/v1/rpc/am07_inventory_" + name, cloudConfig.url);
     const response = await fetch(url, {
       method: "POST",
@@ -1270,7 +1273,7 @@
       } catch (error) {
         console.error(error);
         notify(error.name === "TimeoutError" || error.code === "55P03" || error.code === "57014" || error.status === 504
-          ? "O Supabase demorou para gravar. Confira o saldo antes de tentar novamente."
+          ? "O banco demorou para gravar. Confira o saldo antes de tentar novamente."
           : "Não foi possível confirmar o ajuste. Confira a quantidade antes de repetir.");
       }
     } else {
